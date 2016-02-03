@@ -21,11 +21,12 @@ typedef double				f64;
 typedef struct spy_state {
 	
 	f64	mem[65536];
-	u32	reg[12];
+	f64	reg[12];
 
 } spy_state;
 
 spy_state*	spy_newstate();
-void		spy_run(spy_state*, u8*);
+void		spy_run(spy_state*, const u8*);
+void		spy_debug(spy_state*);
 
 #endif
