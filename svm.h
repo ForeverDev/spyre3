@@ -20,13 +20,14 @@ typedef double				f64;
 
 typedef struct spy_state {
 	
-	f64	mem[65536];
-	f64	reg[12];
+	u64	mem[65536];
+	u64	reg[12];
 
 } spy_state;
 
 spy_state*	spy_newstate();
 void		spy_run(spy_state*, const u8*);
+void		spy_toWords(spy_state*, const u8*);
 void		spy_debug(spy_state*);
 
 #endif
