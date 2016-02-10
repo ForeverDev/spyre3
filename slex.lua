@@ -159,11 +159,13 @@ function lex:generate()
                     self:inc()
                     c = self:getchar()
                 end
-				local t0 = self.tokens[#self.tokens].typeof
-				local t1 = self.tokens[#self.tokens - 1].typeof
-				if t0 == "MINUS" and t1 ~= "IDENTIFIER" and t1 ~= "NUMBER" then
-					num = "-" .. num
-					table.remove(self.tokens, #self.tokens)
+				if self.tokens[#self.tokens - 1] then
+					local t0 = self.tokens[#self.tokens].typeof
+					local t1 = self.tokens[#self.tokens - 1].typeof
+					if t0 == "MINUS" and t1 ~= "IDENTIFIER" and t1 ~= "NUMBER" then
+						num = "-" .. num
+						table.remove(self.tokens, #self.tokens)
+					end
 				end
                 self:pushtoken(num)
                 self:dec()

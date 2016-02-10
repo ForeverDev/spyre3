@@ -3,18 +3,18 @@
 local compile = {}
 
 compile.registers = {
-	["ip"] = 0x00;
-	["sp"] = 0x01;
-	["bp"] = 0x02;
-	["r0"] = 0x03;
-	["r1"] = 0x04;
-	["r2"] = 0x05;
-	["r3"] = 0x06;
-	["r4"] = 0x07;
-	["r5"] = 0x08;
-	["r6"] = 0x09;
-	["r7"] = 0x0a;
-	["r8"] = 0x0b;
+	["rip"] = 0x00;
+	["rsp"] = 0x01;
+	["rbp"] = 0x02;
+	["rax"] = 0x03;
+	["rbx"] = 0x04;
+	["rcx"] = 0x05;
+	["rdx"] = 0x06;
+	["rex"] = 0x07;
+	["rfx"] = 0x08;
+	["rdx"] = 0x09;
+	["rhx"] = 0x0a;
+	["rix"] = 0x0b;
 }
 
 compile.modes = {
@@ -25,10 +25,12 @@ compile.modes = {
 	[4] = {"reg", "reg", "u64"};
 	[5] = {"reg", "u64", "f64"};
 	[6] = {"reg", "u64", "reg"};
+	[7] = {"u64"};
 }
 
 compile.lookup = {
 	["null"]	= 0x00;
+	["ret"]		= 0x01;
 
 	["mov"]		= 0x20;
 	["add"]		= 0x21;
@@ -48,6 +50,7 @@ compile.lookup = {
 
 	["push"]	= 0x40;
 	["pop"]		= 0x41;
+	["call"]	= 0x42;
 }
 
 function compile.new(tokens)
@@ -55,18 +58,22 @@ function compile.new(tokens)
 	local self 			= setmetatable({}, {__index = compile})
 	self.tokens			= tokens
 	self.bytecode		= {}
+	self.labels			= {}
 
 	return self
 
 end
 
 function compile:doesMatch(tokens, syntax)
+	if #syntax == 0 and #tokens == 0 then
+		return true
+	end
 	if #tokens ~= #syntax then
 		return false
 	end
 	for i, v in ipairs(tokens) do
 		local s = syntax[i]
-		if s == "reg" and not (v.word:match("r%d") or v.word == "ip" or v.word == "sp" or v.word == "bp") then
+		if s == "reg" and not v.word:find("^r.-") then
 			return false
 		elseif (s == "u64" or s == "f64") and v.typeof ~= "NUMBER" then
 			return false
@@ -83,6 +90,38 @@ function compile:writeFormatted(format, val)
 end
 
 function compile:convert()
+	-- preprocess the lables
+	local c = 0
+	local torem = {}
+	for j, v in ipairs(self.tokens) do
+		-- TODO fix placement
+		if v.typeof == "IDENTIFIER" and self.tokens[j + 1] and self.tokens[j + 1].typeof == "COLON" then
+			self.labels[v.word] = c 
+			table.insert(torem, j)
+			table.insert(torem, j + 1)
+		elseif v.typeof == "IDENTIFIER" or v.typeof == "NUMBER" then
+			if tonumber(v.word) then
+				c = c + 8
+			elseif compile.lookup[v.word] then
+				c = c + 2
+			elseif compile.registers[v.word] then
+				c = c + 1
+			else
+				print("not", v.word)
+			end
+		end
+	end
+	for j = #torem, 1, -1 do
+		table.remove(self.tokens, torem[j])
+	end
+	for j, v in ipairs(self.tokens) do
+		if v.typeof == "IDENTIFIER" and not compile.lookup[v.word] and not compile.registers[v.word] then
+			self.tokens[j] = {
+				typeof = "NUMBER";
+				word = tostring(self.labels[v.word]);
+			}
+		end
+	end
 	local i = 1
 	while i <= #self.tokens do
 		local t = self.tokens[i]
@@ -90,12 +129,12 @@ function compile:convert()
 		if t.typeof == "IDENTIFIER" and compile.lookup[t.word] then
 			local inrow = {}
 			do
-				local j = i + 1
-				while j <= #self.tokens and not compile.lookup[self.tokens[j].word] do
-					table.insert(inrow, self.tokens[j])
-					j = j + 1
+				i = i + 1
+				while i <= #self.tokens and not compile.lookup[self.tokens[i].word] do
+					table.insert(inrow, self.tokens[i])
 					i = i + 1
 				end
+				i = i - 1
 			end
 			local add = 1
 			for j = #inrow, 1, -1 do
@@ -135,7 +174,10 @@ function compile:convert()
 				table.insert(self.bytecode, compile.registers[inrow[1].word])
 				self:writeFormatted("d", tonumber(inrow[2].word) * add)
 				table.insert(self.bytecode, compile.registers[inrow[3].word])	
-			end	
+			elseif self:doesMatch(inrow, compile.modes[7]) then
+				table.insert(self.bytecode, 0x07)
+				self:writeFormatted("d", tonumber(inrow[1].word))
+			end
 		end
 		i = i + 1
 	end

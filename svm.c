@@ -105,6 +105,7 @@ void spy_run(spy_state* S, const u8* code) {
 				break;
 		}
 		// now, test opcode again and use a, b and c accordingly
+		printf("%x\n", opcode);
 		switch (opcode) {
 			case 0x00:	// NULL
 				return;
@@ -174,10 +175,10 @@ void spy_run(spy_state* S, const u8* code) {
 				switch (mode) {
 					case 7:
 						S->mem[(u64)(--S->reg[SP])] = S->reg[IP];
-						printf("%d\n", (u64)a);
 						S->reg[IP] = a;
 						break;
 				}
+				break;
 		}
 	}
 }

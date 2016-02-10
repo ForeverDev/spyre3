@@ -1,1 +1,11 @@
-call 0
+call start 
+
+func:
+	push	rbp
+	mov		rbp, rsp
+
+	pop		rbp
+	ret
+
+start:
+	ret
