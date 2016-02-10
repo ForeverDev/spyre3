@@ -21,7 +21,7 @@ int main(int argc, char** argv) {
 	fseek(f, 0, SEEK_END);
 	unsigned long long len = ftell(f);
 	fseek(f, 0, SEEK_SET);
-	char* contents = malloc(len + 1);
+	unsigned char* contents = malloc(len + 1);
 	fread(contents, len, 1, f);
 	contents[len] = 0;
 

@@ -1,16 +1,1 @@
-mov		r0, 10
-mov		r1, 20
-
-push	bp
-push	r0
-push 	r1
-mov		bp, sp
-sub		sp, 10
-
-mov		r0, 1
-mov		r1, 2
-
-mov		sp, bp
-pop		r0
-pop 	r1
-pop		bp
+call 0

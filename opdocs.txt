@@ -9,6 +9,7 @@ instruction format:	<opcode> <mode> <a>? <b>? <c>?
 	4 = a(reg), [b(reg) + c(u64)]
 	5 = [a(reg) + b(u64)], c(f64)
 	6 = [a(reg) + b(u64)], c(reg)
+	7 = a(u64)
 
 OPCODE	NAME	VALID MODES 
 00		NULL	0
@@ -32,3 +33,4 @@ OPCODE	NAME	VALID MODES
 
 40		PUSH	1
 41		POP 	0 1
+42		CALL	7	

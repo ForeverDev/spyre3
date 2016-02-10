@@ -14,42 +14,42 @@ spy_state* spy_newstate() {
 	return S;
 }
 
-#define ARITH(op)												\
-	switch (mode) {												\
-		case 2:													\
-			S->reg[a] op b;										\
-			break;												\
-		case 3:													\
-			S->reg[a] op S->reg[(u64)b];						\
-			break;												\
-		case 4:													\
-			S->reg[a] op S->mem[(u64)S->reg[(u64)b] + (u64)c];	\
-			break;												\
-		case 5: 												\
-			S->mem[(u64)S->reg[a] + (u64)b] op c;				\
-			break;												\
-		case 6:													\
-			S->mem[(u64)S->reg[a] + (u64)b] op S->reg[(u64)c];	\
-			break;												\
+#define ARITH(op)														\
+	switch (mode) {														\
+		case 2:															\
+			S->reg[(u64)a] op b;										\
+			break;														\
+		case 3:															\
+			S->reg[(u64)a] op S->reg[(u64)b];							\
+			break;														\
+		case 4:															\
+			S->reg[(u64)a] op S->mem[(u64)S->reg[(u64)b] + (u64)c];		\
+			break;														\
+		case 5:															\
+			S->mem[(u64)S->reg[(u64)a] + (u64)b] op c;					\
+			break;														\
+		case 6:															\
+			S->mem[(u64)S->reg[(u64)a] + (u64)b] op S->reg[(u64)c];		\
+			break;														\
 	}
 
-#define BIT(op)																								\
-	switch (mode) {																							\
-		case 2:																								\
-			S->reg[a] = (u64)S->reg[a] op (u64)b;															\
-			break;																							\
-		case 3:																								\
-			S->reg[a] = (u64)S->reg[a] op (u64)S->reg[(u64)b];												\
-			break;																							\
-		case 4:																								\
-			S->reg[a] = (u64)S->reg[a] op (u64)S->mem[(u64)S->reg[(u64)b] + (u64)c];						\
-			break;																							\
-		case 5: 																							\
-			S->mem[(u64)S->reg[a] + (u64)b] = (u64)S->mem[(u64)S->reg[a] + (u64)b] op (u64)c;				\
-			break;																							\
-		case 6:																								\
-			S->mem[(u64)S->reg[a] + (u64)b] = (u64)S->mem[(u64)S->reg[a] + (u64)b] op (u64)S->reg[(u64)c];	\
-			break;																							\
+#define BIT(op)																											\
+	switch (mode) {																										\
+		case 2:																											\
+			S->reg[(u64)a] = (u64)S->reg[(u64)a] op (u64)b;																\
+			break;																										\
+		case 3:																											\
+			S->reg[(u64)a] = (u64)S->reg[(u64)a] op (u64)S->reg[(u64)b];												\
+			break;																										\
+		case 4:																											\
+			S->reg[(u64)a] = (u64)S->reg[(u64)a] op (u64)S->mem[(u64)S->reg[(u64)b] + (u64)c];							\
+			break;																										\
+		case 5:																											\
+			S->mem[(u64)S->reg[(u64)a] + (u64)b] = (u64)S->mem[(u64)S->reg[(u64)a] + (u64)b] op (u64)c;					\
+			break;																										\
+		case 6:																											\
+			S->mem[(u64)S->reg[(u64)a] + (u64)b] = (u64)S->mem[(u64)S->reg[(u64)a] + (u64)b] op (u64)S->reg[(u64)c];	\
+			break;																										\
 	}
 
 #define COMPARE(op)
@@ -62,7 +62,7 @@ void spy_run(spy_state* S, const u8* code) {
 	while (1) {
 		u8 opcode = code[(u64)S->reg[IP]++];
 		u8 mode = code[(u64)S->reg[IP]++];
-		u8 a;					
+		f64 a;					
 		f64 b;
 		f64 c;
 		// first, assign b and c accordingly based on the mode
@@ -99,6 +99,9 @@ void spy_run(spy_state* S, const u8* code) {
 				memcpy(&b, &code[(u64)S->reg[IP]], sizeof(u64));
 				S->reg[IP] += sizeof(u64);
 				c = code[(u64)S->reg[IP]++];
+				break;
+			case 7:
+				memcpy(&a, &code[(u64)S->reg[IP]], sizeof(u64));
 				break;
 		}
 		// now, test opcode again and use a, b and c accordingly
@@ -153,7 +156,7 @@ void spy_run(spy_state* S, const u8* code) {
 			case 0x40: 	// PUSH
 				switch (mode) {
 					case 1:
-						S->mem[(u64)(--S->reg[SP])] = S->reg[a];
+						S->mem[(u64)(--S->reg[SP])] = S->reg[(u64)a];
 						break;
 				}
 				break;
@@ -163,10 +166,18 @@ void spy_run(spy_state* S, const u8* code) {
 						S->reg[SP]--;
 						break;
 					case 1:
-						S->reg[a] = S->mem[(u64)S->reg[SP]++];
+						S->reg[(u64)a] = S->mem[(u64)S->reg[SP]++];
 						break;
 				}
 				break;
+			case 0x42:	// CALL
+				switch (mode) {
+					case 7:
+						S->mem[(u64)(--S->reg[SP])] = S->reg[IP];
+						printf("%d\n", (u64)a);
+						S->reg[IP] = a;
+						break;
+				}
 		}
 	}
 }
