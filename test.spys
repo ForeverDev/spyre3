@@ -4,8 +4,13 @@ func:
 	push	rbp
 	mov		rbp, rsp
 
+	sub		rax, 20
+
 	pop		rbp
 	ret
 
 start:
+	mov		rax, 10
+	call	func
+	mov		rcx, 30
 	ret

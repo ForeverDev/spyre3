@@ -107,7 +107,7 @@ function compile:convert()
 			elseif compile.registers[v.word] then
 				c = c + 1
 			else
-				print("not", v.word)
+				c = c + 8
 			end
 		end
 	end
