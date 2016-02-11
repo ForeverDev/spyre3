@@ -1,7 +1,4 @@
 call start 
-null
-null
-null
 
 anotherThing:
 	push	rbp
