@@ -1,29 +1,22 @@
-call start 
+jmp			start
 
-anotherThing:
+go:
 	push	rbp
 	mov		rbp, rsp
+	sub		rsp, 2
 
-	mov		rax, 500
+	mov		[rbp - 1], rdx
+	add		[rbp - 1], rex
+	mul		[rbp - 1], 2
+	mov		rax, [rbp - 1]
 
-	mov		rsp, rbp
-	pop		rbp
-	ret
-
-thing:
-	push	rbp
-	mov		rbp, rsp
-
-	sub		rax, 20
-	
 	mov		rsp, rbp
 	pop		rbp
 	ret
 
 start:
-	call	anotherThing
-	call	thing
-	sub		rax, 20
-	mov		rbx, 10
-	mov		rcx, 30
-	ret
+	mov		rdx, 160
+	mov		rex, 2
+	call	go	
+	null
+

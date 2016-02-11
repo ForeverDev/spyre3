@@ -12,7 +12,7 @@ compile.registers = {
 	["rdx"] = 0x06;
 	["rex"] = 0x07;
 	["rfx"] = 0x08;
-	["rdx"] = 0x09;
+	["rgx"] = 0x09;
 	["rhx"] = 0x0a;
 	["rix"] = 0x0b;
 }
@@ -37,20 +37,29 @@ compile.lookup = {
 	["sub"]		= 0x22;
 	["mul"]		= 0x23;
 	["div"]		= 0x24;
-	["or"]		= 0x25;
-	["and"]		= 0x26;
-	["xor"]		= 0x27;
-	["shl"]		= 0x28;
-	["shr"]		= 0x29;
-	["cmp"]		= 0x2a;
-	["gt"]		= 0x2b;
-	["ge"]		= 0x2c;
-	["lt"]		= 0x2d;
-	["le"]		= 0x2e;
+	["neg"]		= 0x25;
+	["or"]		= 0x26;
+	["and"]		= 0x27;
+	["xor"]		= 0x28;
+	["not"]		= 0x29;
+	["shl"]		= 0x2a;
+	["shr"]		= 0x2b;
+	["lt"]		= 0x2c;
+	["le"]		= 0x2d;
+	["gt"]		= 0x2e;
+	["ge"]		= 0x2f;
+	["cmp"]		= 0x30;
+	["land"]	= 0x31;
+	["lor"]		= 0x32;
+	["lnot"]	= 0x33;
 
 	["push"]	= 0x40;
 	["pop"]		= 0x41;
-	["call"]	= 0x42;
+
+	["call"]	= 0x60;
+	["jmp"]		= 0x61;
+	["jit"]		= 0x62;
+	["jif"]		= 0x63;
 }
 
 function compile.new(tokens)
@@ -73,7 +82,7 @@ function compile:doesMatch(tokens, syntax)
 	end
 	for i, v in ipairs(tokens) do
 		local s = syntax[i]
-		if s == "reg" and not v.word:find("^r.-") then
+		if s == "reg" and not compile.registers[v.word] then
 			return false
 		elseif (s == "u64" or s == "f64") and v.typeof ~= "NUMBER" then
 			return false
@@ -99,7 +108,6 @@ function compile:convert()
 			self.labels[v.word] = c
 			table.insert(torem, j)
 			table.insert(torem, j + 1)
-			print("info", self.labels[v.word], v.word)
 		elseif v.typeof == "IDENTIFIER" or v.typeof == "NUMBER" then
 			if tonumber(v.word) then
 				c = c + 8
