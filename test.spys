@@ -27,5 +27,6 @@ start:
 	call	anotherThing
 	call	thing
 	sub		rax, 20
+	mov		rbx, 10
 	mov		rcx, 30
 	ret
