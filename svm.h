@@ -26,7 +26,7 @@ typedef struct spy_state {
 	
 	f64	mem[65536];
 	f64	reg[12];
-	u64	flags;
+	u8	flags;
 
 } spy_state;
 

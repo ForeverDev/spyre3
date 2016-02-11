@@ -256,4 +256,10 @@ void spy_debug(spy_state* S) {
 	for (u32 i = SIZE_STACK - 1; i >= S->reg[SP]; i--) {
 		printf("0x%08x: %lf\n", i, S->mem[i]);
 	}
+	printf("\nFLAGS\n");
+	u8 copyflag = S->flags;
+	for (u8 i = 0; i < 8; i++) {
+		printf("0x%02x: %d\n", i, copyflag & 0x01); 
+		copyflag >>= 1;
+	}
 }

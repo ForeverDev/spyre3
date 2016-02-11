@@ -2,7 +2,7 @@ jmp			start
 
 start:
 	mov		rdx, 10
-	mov		rex, 11 
+	mov		rex, 10 
 	cmp		rdx, rex
 	jif		else
 	mov		rax, 1
