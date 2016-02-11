@@ -96,9 +96,10 @@ function compile:convert()
 	for j, v in ipairs(self.tokens) do
 		-- TODO fix placement
 		if v.typeof == "IDENTIFIER" and self.tokens[j + 1] and self.tokens[j + 1].typeof == "COLON" then
-			self.labels[v.word] = c 
+			self.labels[v.word] = c
 			table.insert(torem, j)
 			table.insert(torem, j + 1)
+			print("info", self.labels[v.word], v.word)
 		elseif v.typeof == "IDENTIFIER" or v.typeof == "NUMBER" then
 			if tonumber(v.word) then
 				c = c + 8
@@ -178,6 +179,28 @@ function compile:convert()
 				table.insert(self.bytecode, 0x07)
 				self:writeFormatted("d", tonumber(inrow[1].word))
 			end
+		end
+		i = i + 1
+	end
+end
+
+function compile:dump()
+	local i = 1
+	while i <= #self.tokens do
+		if compile.lookup[self.tokens[i].word] then
+			i = i + 1
+			io.write(self.tokens[i - 1].word .. " ")
+			while not compile.lookup[self.tokens[i].word] do
+				if self.tokens[i].word:match("[%[,%d]+") then
+					io.write(string.char(8))
+				end
+				io.write(self.tokens[i].word .. " ")
+				i = i + 1
+				if i > #self.tokens then
+					break
+				end
+			end
+			print()
 		end
 		i = i + 1
 	end

@@ -102,13 +102,17 @@ void spy_run(spy_state* S, const u8* code) {
 				break;
 			case 7:
 				memcpy(&a, &code[(u64)S->reg[IP]], sizeof(u64));
+				S->reg[IP] += sizeof(u64);
 				break;
 		}
 		// now, test opcode again and use a, b and c accordingly
-		printf("%x\n", opcode);
 		switch (opcode) {
 			case 0x00:	// NULL
 				return;
+			case 0x01:	// RET
+				printf("return to %f %x\n", S->mem[(u64)S->reg[SP]], code[(u64)S->mem[(u64)S->reg[SP]]]);
+				S->reg[IP] = S->mem[(u64)S->reg[SP]++];
+				break;
 			case 0x20: 	// MOV
 				ARITH(=);
 				break;
@@ -164,7 +168,7 @@ void spy_run(spy_state* S, const u8* code) {
 			case 0x41:	// POP
 				switch (mode) {
 					case 0:
-						S->reg[SP]--;
+						S->reg[SP]++;
 						break;
 					case 1:
 						S->reg[(u64)a] = S->mem[(u64)S->reg[SP]++];
@@ -174,7 +178,7 @@ void spy_run(spy_state* S, const u8* code) {
 			case 0x42:	// CALL
 				switch (mode) {
 					case 7:
-						S->mem[(u64)(--S->reg[SP])] = S->reg[IP];
+						S->mem[(u64)(--S->reg[SP])] = S->reg[IP]; 
 						S->reg[IP] = a;
 						break;
 				}

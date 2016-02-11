@@ -1,16 +1,30 @@
 call start 
+null
+null
+null
 
-func:
+anotherThing:
+	push	rbp
+	mov		rbp, rsp
+
+	mov		rax, 500
+
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+thing:
 	push	rbp
 	mov		rbp, rsp
 
 	sub		rax, 20
-
+	
+	mov		rsp, rbp
 	pop		rbp
 	ret
 
 start:
-	mov		rax, 10
-	call	func
+	call	anotherThing
+	sub		rax, 20
 	mov		rcx, 30
 	ret
