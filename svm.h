@@ -5,7 +5,9 @@
 #define SP 1
 #define BP 2
 
-#define SIZE_STACK 1024
+#define	FLAG_CMP	0x01
+		
+#define SIZE_STACK	1024
 
 typedef unsigned char		u8;
 typedef unsigned short		u16;
@@ -24,6 +26,7 @@ typedef struct spy_state {
 	
 	f64	mem[65536];
 	f64	reg[12];
+	u64	flags;
 
 } spy_state;
 

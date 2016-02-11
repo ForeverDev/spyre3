@@ -10,6 +10,7 @@ spy_state* spy_newstate() {
 	memset(S->reg, 0, sizeof(S->reg));
 	S->reg[SP] = SIZE_STACK;
 	S->reg[BP] = SIZE_STACK;
+	S->flags = 0x00;
 
 	return S;
 }
@@ -52,7 +53,31 @@ spy_state* spy_newstate() {
 			break;																										\
 	}
 
-#define COMPARE(op)
+#define COMPARE(op)	{																\
+	u8 istrue;																		\
+	switch (mode) {																	\
+		case 2:																		\
+			istrue = S->reg[(u64)a] == b;											\
+			break;																	\
+		case 3:																		\
+			istrue = S->reg[(u64)a] == S->reg[(u64)b];								\
+			break;																	\
+		case 4:																		\
+			istrue = S->reg[(u64)a] == S->mem[(u64)S->reg[(u64)b] + (u64)c];		\
+			break;																	\
+		case 5:																		\
+			istrue = S->mem[(u64)S->reg[(u64)a] + (u64)b] == c;						\
+			break;																	\
+		case 6:																		\
+			istrue = S->mem[(u64)S->reg[(u64)a] + (u64)b] == S->reg[(u64)c];		\
+	}																				\
+	if (istrue) {																	\
+		S->flags |= FLAG_CMP;														\
+	} else {																		\
+		S->flags &= ~FLAG_CMP;														\
+	}																				\
+}
+			
 
 void spy_run(spy_state* S, const u8* code) {
 	// data is what we use to wrap 8 bytes
@@ -210,7 +235,13 @@ void spy_run(spy_state* S, const u8* code) {
 				S->reg[IP] = a;
 				break;
 			case 0x62:	// JIT
+				if (S->flags & FLAG_CMP) {
+					S->reg[IP] = a;
+				}
 			case 0x63:	// JIF
+				if (!S->flags & FLAG_CMP) {
+					S->reg[IP] = a;
+				}
 				break;
 		}
 	}

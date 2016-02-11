@@ -1,22 +1,14 @@
 jmp			start
 
-go:
-	push	rbp
-	mov		rbp, rsp
-	sub		rsp, 2
-
-	mov		[rbp - 1], rdx
-	add		[rbp - 1], rex
-	mul		[rbp - 1], 2
-	mov		rax, [rbp - 1]
-
-	mov		rsp, rbp
-	pop		rbp
-	ret
-
 start:
-	mov		rdx, 160
-	mov		rex, 2
-	call	go	
+	mov		rdx, 10
+	mov		rex, 11 
+	cmp		rdx, rex
+	jif		else
+	mov		rax, 1
+	jmp		end
+else:
+	mov		rax, 2
+end:	
 	null
 
