@@ -250,15 +250,29 @@ void spy_run(spy_state* S, const u8* code) {
 }
 
 void spy_readAndRun(spy_state* S, const s8* filename) {
-	FILE* f = fopen("test.spyb", "rb");
+	FILE* f = fopen(filename, "rb");
 	fseek(f, 0, SEEK_END);
-	unsigned long long len = ftell(f);
+	u64 len = ftell(f);
 	fseek(f, 0, SEEK_SET);
-	unsigned char* contents = malloc(len + 1);
+	u8* contents = malloc(len + 1);
 	fread(contents, len, 1, f);
 	contents[len] = 0;
 
-	spy_run(S, contents);
+	f64 datastart;
+	f64 codestart;
+
+	// read the file headers (see opdocs.txt for details)
+	memcpy(&datastart, &contents[0], sizeof(u64));
+	memcpy(&codestart, &contents[8], sizeof(u64));
+
+	for (u32 i = 0; i < SIZE_ROM; i += sizeof(f64)) {
+		if (datastart + i >= codestart) {
+			break;
+		}
+		memcpy(&S->mem[i], &contents[(u64)datastart + i], sizeof(f64));
+	}
+	
+	spy_run(S, &contents[(u64)codestart]);
 	spy_debug(S);
 }
 

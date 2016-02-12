@@ -170,7 +170,7 @@ function lex:generate()
                 self:pushtoken(num)
                 self:dec()
             -- operator
-            elseif c:match("%p") or c == ";" or c == "%" then
+            elseif (c:match("%p") or c == ";" or c == "%") and c ~= "_" then
                 local nxt = self:peek(1)
                 if lex.token_grammar[c .. nxt] then
                     -- found double operator

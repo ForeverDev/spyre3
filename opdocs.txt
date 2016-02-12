@@ -46,8 +46,13 @@ OPCODE	NAME	VALID MODES
 62		JIT		7
 63		JIF		7
 
----------- REGISTERS -------------------
+---------- BYTECODE FILE HEADERS -------
+BYTES		DESCRIBES
 
+[0, 8)		starting location of ROM section
+[8, 16)		starting location of code section
+
+---------- REGISTERS -------------------
 CODE	  NAME	  PURPOSE
 
 00		  RIP	  instruction pointer
@@ -65,7 +70,6 @@ CODE	  NAME	  PURPOSE
 0C		  RJX	  general purpose #10, holds function argument #7
 
 ---------- MEMORY LAYOUT ---------------
-
 SECTION	   START					  FINISH	
 
 ROM		   0						  SIZE_ROM - 1
@@ -75,9 +79,7 @@ HEAP	   SIZE_ROM + SIZE_STACK	  SIZE_MEMORY - 1
 
 see svm.h for size macros
 
-
 ---------- CALLING CONVENTION ----------
-
 Arguments should be passed to a function in the following
 registers respectively:
 	RDX

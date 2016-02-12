@@ -101,6 +101,31 @@ function compile:writeFormatted(format, val)
 end
 
 function compile:convert()
+	-- parse the ROM section
+	local rom = {}
+	local i = 1
+	while i <= #self.tokens and self.tokens[i].word ~= "__CODE__" do
+		i = i + 1
+	end
+	for i, v in ipairs(self.tokens) do
+		if v.word == "let" then
+			local val = self.tokens[i + 2]
+			if val.typeof == "STRING" then
+				for j = 1, val.word:len() do
+					local format = string.pack("d", string.byte(val.word:sub(j, j)))
+					for q = 1, format:len() do
+						table.insert(rom, string.byte(format:sub(q, q)))
+					end
+				end
+				for j = 1, 8 do
+					table.insert(rom, 0)
+				end
+			end
+		end
+	end
+	for j = i, 1, -1 do
+		table.remove(self.tokens, j)
+	end
 	-- preprocess the lables
 	local c = 0
 	local torem = {}
@@ -133,6 +158,16 @@ function compile:convert()
 			}
 		end
 	end
+	-- write the file headers into the self.bytecode table
+	-- data start header
+	self:writeFormatted("d", 16)
+	-- code start header
+	self:writeFormatted("d", 16 + #rom)
+	-- write ROM
+	for i, v in ipairs(rom) do
+		table.insert(self.bytecode, v)
+	end
+	-- now handle the instructions
 	local i = 1
 	while i <= #self.tokens do
 		local t = self.tokens[i]

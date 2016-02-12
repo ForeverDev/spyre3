@@ -1,3 +1,7 @@
+__DATA__
+let str "Hello"
+
+__CODE__
 jmp			start
 
 start:
