@@ -83,7 +83,6 @@ see svm.h for size macros
 ---------- CALLING CONVENTION ----------
 Arguments should be passed to a function in the following
 registers respectively:
-	RDX
 	REX
 	RFX
 	RGX
@@ -96,6 +95,7 @@ Registers that should be the same after a function call:
 	RSP
 	RBX
 	RCX
+	RDX
 
 Return value is returned in:
 	RAX
@@ -104,8 +104,9 @@ CALLING C FUNCTIONS:
 	The calling convention for C functions is the same except for
 	one thing.  The number of arguments to the C function is expected
 	on the top of the stack. The number of arguments is passed to the C
-	function as an argument.  Therefore, SpyreVM automatically takes care
-	of the nargs that was pushed onto the stack. 
+	function as an argument.  SpyreVM automatically takes care
+	of the nargs that was pushed onto the stack, you don't need to
+	explicitly take care of it from the C function 
 	
 
 

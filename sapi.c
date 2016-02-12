@@ -1,7 +1,7 @@
 #include <string.h>
 #include "sapi.h"
 
-static const s8* registers[] = {
+static const s8 registers[][3] = {
 	"RIP", "RSP", "RBP",
 	"RAX", "RBX", "RCX",
 	"RDX", "REX", "RFX",

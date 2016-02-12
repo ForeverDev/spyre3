@@ -6,5 +6,6 @@
 void 		spyL_loadlibs(spy_state*);
 
 static void spyL_io_print(spy_state*, u8);
+static void spyL_io_println(spy_state*, u8);
 
 #endif

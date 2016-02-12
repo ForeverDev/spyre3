@@ -239,12 +239,9 @@ void spy_run(spy_state* S, const u8* code) {
 				s8 buf[128];
 				s8* bp = buf;
 				u8 nargs = (u8)S->mem[(u64)S->reg[SP]++];
-				while (S->mem[(u64)a]) {
-					*bp++ = (s8)S->mem[(u64)a];
-					a += 8;
-				}
-				*bp++ = 0;
-				for (u32 i = 0; i < S->nfuncs; i++) {
+				while ((*bp++ = S->mem[(u64)(a += 8) - 8]));
+				*bp = 0;
+				for (u8 i = 0; i < S->nfuncs; i++) {
 					if (!strcmp(S->cfuncs[i].identifier, buf)) {
 						S->cfuncs[i].fptr(S, nargs);
 					}
@@ -292,7 +289,7 @@ void spy_readAndRun(spy_state* S, const s8* filename) {
 	
 	spyL_loadlibs(S);	
 	spy_run(S, &contents[(u64)codestart]);
-	spy_debug(S);
+	//spy_debug(S);
 }
 
 void spy_debug(spy_state* S) {
