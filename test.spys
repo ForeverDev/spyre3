@@ -1,11 +1,13 @@
 __DATA__
-let fname "David"
-let lname "Wilson"
+let print "print"
 
 __CODE__
 jmp			start
 
 start:
-	mov		rax, fname
-	mov		rbx, lname
+	mov		rdx, 10
+	push	1
+	ccall	print
 	exit
+
+

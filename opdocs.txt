@@ -38,7 +38,7 @@ OPCODE	NAME	VALID MODES
 32		LOR		2 3 4 5 6
 33		LNOT	2 3 4 5 6
 
-40		PUSH	1
+40		PUSH	1 7
 41		POP 	0 1
 
 60		CALL	7	
@@ -99,6 +99,13 @@ Registers that should be the same after a function call:
 
 Return value is returned in:
 	RAX
+
+CALLING C FUNCTIONS:
+	The calling convention for C functions is the same except for
+	one thing.  The number of arguments to the C function is expected
+	on the top of the stack. The number of arguments is passed to the C
+	function as an argument.  Therefore, SpyreVM automatically takes care
+	of the nargs that was pushed onto the stack. 
 	
 
 

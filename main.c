@@ -3,7 +3,7 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-#include "svm.h"
+#include "spyre.h"
 
 int main(int argc, char** argv) {
 
