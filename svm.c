@@ -8,8 +8,8 @@ spy_state* spy_newstate() {
 	
 	memset(S->mem, 0, sizeof(S->mem));
 	memset(S->reg, 0, sizeof(S->reg));
-	S->reg[SP] = SIZE_STACK;
-	S->reg[BP] = SIZE_STACK;
+	S->reg[SP] = SIZE_ROM + SIZE_STACK;
+	S->reg[BP] = SIZE_ROM + SIZE_STACK;
 	S->flags = 0x00;
 
 	return S;
@@ -134,7 +134,9 @@ void spy_run(spy_state* S, const u8* code) {
 		switch (opcode) {
 			case 0x00:	// NULL
 				return;
-			case 0x01:	// RET
+			case 0x01:	// EXIT
+				return;
+			case 0x02:	// RET
 				S->reg[IP] = S->mem[(u64)S->reg[SP]++];
 				break;
 			case 0x20: 	// MOV
@@ -247,16 +249,30 @@ void spy_run(spy_state* S, const u8* code) {
 	}
 }
 
+void spy_readAndRun(spy_state* S, const s8* filename) {
+	FILE* f = fopen("test.spyb", "rb");
+	fseek(f, 0, SEEK_END);
+	unsigned long long len = ftell(f);
+	fseek(f, 0, SEEK_SET);
+	unsigned char* contents = malloc(len + 1);
+	fread(contents, len, 1, f);
+	contents[len] = 0;
+
+	spy_run(S, contents);
+	spy_debug(S);
+}
+
 void spy_debug(spy_state* S) {
+	printf("----REGISTERS----\n");
 	printf("RIP: 0x%04x\nRSP: 0x%04x\nRBP: 0x%04x\n", (u32)S->reg[IP], (u32)S->reg[SP], (u32)S->reg[BP]);
 	for (u32 i = 3; i < 12; i++) {
 		printf("R%cX: %lf\n", 'A' + (i - 3), S->reg[i]);
 	}	
-	printf("\nSTACK\n");
-	for (u32 i = SIZE_STACK - 1; i >= S->reg[SP]; i--) {
+	printf("\n----STACK----\n");
+	for (u32 i = SIZE_STACK + SIZE_ROM - 1; i >= S->reg[SP]; i--) {
 		printf("0x%08x: %lf\n", i, S->mem[i]);
 	}
-	printf("\nFLAGS\n");
+	printf("\n----FLAGS----\n");
 	u8 copyflag = S->flags;
 	for (u8 i = 0; i < 8; i++) {
 		printf("0x%02x: %d\n", i, copyflag & 0x01); 

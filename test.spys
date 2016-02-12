@@ -10,5 +10,5 @@ start:
 else:
 	mov		rax, 2
 end:	
-	null
+	exit
 

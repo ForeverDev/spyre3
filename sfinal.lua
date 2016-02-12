@@ -15,6 +15,7 @@ compile.registers = {
 	["rgx"] = 0x09;
 	["rhx"] = 0x0a;
 	["rix"] = 0x0b;
+	["rjx"]	= 0x0c;
 }
 
 compile.modes = {
@@ -30,7 +31,8 @@ compile.modes = {
 
 compile.lookup = {
 	["null"]	= 0x00;
-	["ret"]		= 0x01;
+	["exit"]	= 0x01;
+	["ret"]		= 0x02;
 
 	["mov"]		= 0x20;
 	["add"]		= 0x21;

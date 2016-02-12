@@ -23,16 +23,7 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	FILE* f = fopen("test.spyb", "rb");
-	fseek(f, 0, SEEK_END);
-	unsigned long long len = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	unsigned char* contents = malloc(len + 1);
-	fread(contents, len, 1, f);
-	contents[len] = 0;
-
-	spy_run(S, contents);
-	spy_debug(S);
+	spy_readAndRun(S, "test.spyb");
 
 	return 0;
 

@@ -6,8 +6,10 @@
 #define BP 2
 
 #define	FLAG_CMP	0x01
-		
-#define SIZE_STACK	1024
+
+#define SIZE_ROM	0x00800		
+#define SIZE_STACK	0x00400
+#define SIZE_MEMORY	0x10000
 
 typedef unsigned char		u8;
 typedef unsigned short		u16;
@@ -22,9 +24,19 @@ typedef signed long long	s64;
 typedef	float				f32;
 typedef double				f64;
 
+struct spy_state;
+struct spy_cfunc;
+
+typedef struct spy_cfunc {
+	
+	s8 identifier[128];
+	void (*fptr)(struct spy_state*);
+
+} spy_cfunc;
+
 typedef struct spy_state {
 	
-	f64	mem[65536];
+	f64	mem[SIZE_MEMORY];
 	f64	reg[12];
 	u8	flags;
 
@@ -32,6 +44,7 @@ typedef struct spy_state {
 
 spy_state*		spy_newstate();
 void			spy_run(spy_state*, const u8*);
+void			spy_readAndRun(spy_state*, const s8*);
 void			spy_debug(spy_state*);
 
 #endif

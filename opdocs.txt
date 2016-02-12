@@ -14,7 +14,8 @@ instruction format:	<opcode> <mode> <a>? <b>? <c>?
 
 OPCODE	NAME	VALID MODES 
 00		NULL	0
-01		RET		0
+01		EXIT	0
+02		RET		0
 
 20		MOV		2 3 4 5 6
 21		ADD		2 3 4 5 6
@@ -37,7 +38,6 @@ OPCODE	NAME	VALID MODES
 32		LOR		2 3 4 5 6
 33		LNOT	2 3 4 5 6
 
-
 40		PUSH	1
 41		POP 	0 1
 
@@ -45,6 +45,35 @@ OPCODE	NAME	VALID MODES
 61		JMP		7
 62		JIT		7
 63		JIF		7
+
+---------- REGISTERS -------------------
+
+CODE	  NAME	  PURPOSE
+
+00		  RIP	  instruction pointer
+01		  RSP	  stack pointer
+02		  RBP	  base pointer
+03		  RAX	  general purpose #1, holds function return value
+04		  RBX	  general purpose #2
+05		  RCX	  general purpose #3
+06		  RDX	  general purpose #4, holds function argument #1
+07		  REX	  general purpose #5, holds function argument #2
+08		  RFX	  general purpose #6, holds function argument #3
+09		  RGX	  general purpose #7, holds function argument #4
+0A		  RHX	  general purpose #8, holds function argument #5
+0B		  RIX	  general purpose #9, holds function argument #6
+0C		  RJX	  general purpose #10, holds function argument #7
+
+---------- MEMORY LAYOUT ---------------
+
+SECTION	   START					  FINISH	
+
+ROM		   0						  SIZE_ROM - 1
+STACK	   SIZE_ROM					  SIZE_ROM + SIZE_STACK - 1
+HEAP	   SIZE_ROM + SIZE_STACK	  SIZE_MEMORY - 1
+
+
+see svm.h for size macros
 
 
 ---------- CALLING CONVENTION ----------
@@ -57,6 +86,7 @@ registers respectively:
 	RGX
 	RHX
 	RIX
+	RJX
 
 Registers that should be the same after a function call:
 	RBP
