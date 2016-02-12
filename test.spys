@@ -1,6 +1,8 @@
 __DATA__
 let print	"print"
 let println	"println"
+let message "ooooo"
+let format	"%s"
 
 __CODE__
 jmp			start
@@ -19,9 +21,9 @@ not1:
 	ret
 
 start:
-	mov		rex, 5
-	call	factorial
-	mov		rex, rax
-	push	1
+	mov		rex, format
+	mov		rfx, message
+	push	2
 	ccall	println
+
 	exit

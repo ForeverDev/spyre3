@@ -289,7 +289,7 @@ void spy_readAndRun(spy_state* S, const s8* filename) {
 	
 	spyL_loadlibs(S);	
 	spy_run(S, &contents[(u64)codestart]);
-	//spy_debug(S);
+	spy_debug(S);
 }
 
 void spy_debug(spy_state* S) {
