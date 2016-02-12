@@ -59,9 +59,10 @@ compile.lookup = {
 	["pop"]		= 0x41;
 
 	["call"]	= 0x60;
-	["jmp"]		= 0x61;
-	["jit"]		= 0x62;
-	["jif"]		= 0x63;
+	["ccall"]	= 0x61;
+	["jmp"]		= 0x62;
+	["jit"]		= 0x63;
+	["jif"]		= 0x64;
 }
 
 function compile.new(tokens)
@@ -110,7 +111,9 @@ function compile:convert()
 	for i, v in ipairs(self.tokens) do
 		if v.word == "let" then
 			local val = self.tokens[i + 2]
+			local ptr = #rom
 			if val.typeof == "STRING" then
+				-- TODO write chars not doubles
 				for j = 1, val.word:len() do
 					local format = string.pack("d", string.byte(val.word:sub(j, j)))
 					for q = 1, format:len() do
@@ -119,6 +122,14 @@ function compile:convert()
 				end
 				for j = 1, 8 do
 					table.insert(rom, 0)
+				end
+			end
+			for j = i + 3, #self.tokens do
+				if self.tokens[j].word == self.tokens[i + 1].word then
+					self.tokens[j] = {
+						typeof = "NUMBER";
+						word = tostring(ptr);
+					}
 				end
 			end
 		end

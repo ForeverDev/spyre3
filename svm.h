@@ -36,9 +36,10 @@ typedef struct spy_cfunc {
 
 typedef struct spy_state {
 	
-	f64	mem[SIZE_MEMORY];
-	f64	reg[12];
-	u8	flags;
+	f64			mem[SIZE_MEMORY];
+	f64			reg[12];
+	u8			flags;
+	spy_cfunc 	cfuncs[128];
 
 } spy_state;
 

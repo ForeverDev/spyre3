@@ -1,18 +1,11 @@
 __DATA__
-let str "Hello"
+let fname "David"
+let lname "Wilson"
 
 __CODE__
 jmp			start
 
 start:
-	mov		rdx, 10
-	mov		rex, 10 
-	cmp		rdx, rex
-	jif		else
-	mov		rax, 1
-	jmp		end
-else:
-	mov		rax, 2
-end:	
+	mov		rax, fname
+	mov		rbx, lname
 	exit
-
