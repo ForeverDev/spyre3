@@ -129,8 +129,8 @@ function lex:generate()
             -- newline
             if c == "\n" then
                 self.line = self.line + 1
-            elseif c == "/" and self.source:sub(self.index + 1, self.index + 1) == "/" then
-                self:inc(2)
+            elseif c == ";" or (c == "/" and self.source:sub(self.index + 1, self.index + 1) == "/") then
+                self:inc(c == ";" and 1 or 2)
                 while self:space() and self:getchar() ~= "\n" do
                     self:inc()
                 end
@@ -145,6 +145,15 @@ function lex:generate()
 				else
 					while c ~= "\"" do
 						c = self:getchar()
+						if c == "\\" then
+							self:inc()
+							local n = self:getchar()
+							if n == "n" then
+								c = "\n"
+							elseif n == "t" then
+								c = "\t"
+							end
+						end
 						str = str .. c
 						self:inc()
 					end

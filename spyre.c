@@ -61,19 +61,19 @@ spy_state* spy_newstate() {
 	u8 istrue;																		\
 	switch (mode) {																	\
 		case 2:																		\
-			istrue = S->reg[(u64)a] == b;											\
+			istrue = S->reg[(u64)a] op b;											\
 			break;																	\
 		case 3:																		\
-			istrue = S->reg[(u64)a] == S->reg[(u64)b];								\
+			istrue = S->reg[(u64)a] op S->reg[(u64)b];								\
 			break;																	\
 		case 4:																		\
-			istrue = S->reg[(u64)a] == S->mem[(u64)S->reg[(u64)b] + (u64)c];		\
+			istrue = S->reg[(u64)a] op S->mem[(u64)S->reg[(u64)b] + (u64)c];		\
 			break;																	\
 		case 5:																		\
-			istrue = S->mem[(u64)S->reg[(u64)a] + (u64)b] == c;						\
+			istrue = S->mem[(u64)S->reg[(u64)a] + (u64)b] op c;						\
 			break;																	\
 		case 6:																		\
-			istrue = S->mem[(u64)S->reg[(u64)a] + (u64)b] == S->reg[(u64)c];		\
+			istrue = S->mem[(u64)S->reg[(u64)a] + (u64)b] op S->reg[(u64)c];		\
 	}																				\
 	if (istrue) {																	\
 		S->flags |= FLAG_CMP;														\

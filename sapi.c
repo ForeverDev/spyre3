@@ -33,10 +33,18 @@ u64 spy_pushchar(spy_state* S, s8 c) {
 	return head;
 }
 
+void spy_setmem(spy_state* S, u64 addr, f64 val) {
+	S->mem[addr] = val;
+}
+
 void spy_setregister(spy_state* S, const s8* name, f64 val) {
 	u8 i = 0;
 	while (strncmp(name, registers[i++], 3));
 	S->reg[i - 1] = val;
+}
+
+f64 spy_getmem(spy_state* S, u64 addr) {
+	return S->mem[addr];
 }
 
 f64 spy_getregister(spy_state* S, const s8* name) {

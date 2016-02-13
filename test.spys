@@ -1,12 +1,56 @@
 __DATA__
 let malloc 	"malloc"
+let println	"println"
+let free	"free"
+let format  "mem[0] = %d, mem[99] = %d"
 
 __CODE__
 jmp			start
 
-start:
-	push 	1
-	mov		rex, 10
+; ptr test(s)
+; generates an array of size s allocated
+; on the heap.  ptr[0] is 1, ptr[s - 1] is s
+test:
+	push	rbp
+	mov		rbp, rsp
+	sub		rsp, 2
+
+	; allocate space for the array	
+	mov		rex, rex
+	push	1
 	ccall	malloc
+	mov		[rbp - 1], rax
+
+	; set a counting variable, will be used
+	; to set values in the array
+	mov		[rbp - 2], rex
+
+	; now loop
+loop:
+	gt		[rbp - 2], 0
+	jif		done
+	mov		rbx, [rbp - 1]
+	add		rbx, [rbp - 2]
+	mov		rcx, [rbp - 2]
+	mov		[rbx + 0], rcx
+	sub		[rbp - 2], 1
+	jmp 	loop
+
+done:
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+start:
+	mov		rex, 100
+	call 	test
+
+	mov		rex, format
+	mov		rfx, [rax + 1]
+	mov		rgx, [rax + 100]
+	push	3
+	ccall	println
 
 	exit
+
+
