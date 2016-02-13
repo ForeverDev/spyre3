@@ -1,5 +1,5 @@
 __DATA__
-let malloc 	"alloc"
+let malloc 	"malloc"
 
 __CODE__
 jmp			start
