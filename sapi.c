@@ -33,16 +33,20 @@ u64 spy_pushchar(spy_state* S, s8 c) {
 	return head;
 }
 
+void spy_setregister(spy_state* S, const s8* name, f64 val) {
+	u8 i = 0;
+	while (strncmp(name, registers[i++], 3));
+	S->reg[i - 1] = val;
+}
+
 f64 spy_getregister(spy_state* S, const s8* name) {
 	u8 i = 0;
 	while (strncmp(name, registers[i++], 3));
 	return S->reg[i - 1];
 }
 
-void spy_setregister(spy_state* S, const s8* name, f64 val) {
-	u8 i = 0;
-	while (strncmp(name, registers[i++], 3));
-	S->reg[i - 1] = val;
+const s8* spy_getarg(spy_state* S, u8 argn) {
+	return registers[argn + 7];
 }
 
 f64 spy_gettop(spy_state* S) {
@@ -50,12 +54,14 @@ f64 spy_gettop(spy_state* S) {
 }
 
 s8* spy_getstr(spy_state* S, const s8* regname, s8* buf) {
+	s8* start = buf;
 	u64 ptr = (u64)spy_getregister(S, regname);
 	while (S->mem[(u64)ptr]) {
 		*buf++ = (s8)S->mem[(u64)ptr];
 		ptr += 8;
 	}
-	return buf;
+	*buf++ = 0;
+	return start;
 }
 
 s8 spy_getchar(spy_state* S, const s8* regname) {

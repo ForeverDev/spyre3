@@ -62,13 +62,13 @@ CODE	  NAME	  PURPOSE
 03		  RAX	  general purpose #1, holds function return value
 04		  RBX	  general purpose #2
 05		  RCX	  general purpose #3
-06		  RDX	  general purpose #4, holds function argument #1
-07		  REX	  general purpose #5, holds function argument #2
-08		  RFX	  general purpose #6, holds function argument #3
-09		  RGX	  general purpose #7, holds function argument #4
-0A		  RHX	  general purpose #8, holds function argument #5
-0B		  RIX	  general purpose #9, holds function argument #6
-0C		  RJX	  general purpose #10, holds function argument #7
+06		  RDX	  general purpose #4
+07		  REX	  general purpose #5, holds function argument #1
+08		  RFX	  general purpose #6, holds function argument #2
+09		  RGX	  general purpose #7, holds function argument #3
+0A		  RHX	  general purpose #8, holds function argument #4
+0B		  RIX	  general purpose #9, holds function argument #5
+0C		  RJX	  general purpose #10, holds function argument #6
 
 ---------- MEMORY LAYOUT ---------------
 SECTION	   START					  FINISH	
@@ -83,7 +83,6 @@ see svm.h for size macros
 ---------- CALLING CONVENTION ----------
 Arguments should be passed to a function in the following
 registers respectively:
-	REX
 	RFX
 	RGX
 	RHX

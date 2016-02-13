@@ -1,6 +1,7 @@
 #include <stdlib.h>
 #include <stdio.h>
 #include <string.h>
+#include <stdarg.h>
 #include "sapi.h"
 #include "slib.h"
 #include "spyre.h"
@@ -10,8 +11,8 @@ spy_state* spy_newstate() {
 	
 	memset(S->mem, 0, sizeof(S->mem));
 	memset(S->reg, 0, sizeof(S->reg));
-	S->reg[SP] = SIZE_ROM + SIZE_STACK;
-	S->reg[BP] = SIZE_ROM + SIZE_STACK;
+	S->reg[SP] = START_STACK;
+	S->reg[BP] = START_STACK;
 	S->flags = 0x00;
 	S->nfuncs = 0;
 
@@ -238,13 +239,20 @@ void spy_run(spy_state* S, const u8* code) {
 			case 0x61: { // CCALL 
 				s8 buf[128];
 				s8* bp = buf;
+				u8 foundfunc = 0;
 				u8 nargs = (u8)S->mem[(u64)S->reg[SP]++];
-				while ((*bp++ = S->mem[(u64)(a += 8) - 8]));
+				while ((*bp++ = S->mem[(u64)a])) a += 8;
 				*bp = 0;
 				for (u8 i = 0; i < S->nfuncs; i++) {
 					if (!strcmp(S->cfuncs[i].identifier, buf)) {
 						S->cfuncs[i].fptr(S, nargs);
+						foundfunc = 1;
+						break;
 					}
+				}
+				if (!foundfunc) {
+					spy_runtimeError(S, "Attempt to call non-existant Spyre or C function '%s'", buf);
+					exit(1);
 				}
 				break;
 			} 
@@ -255,6 +263,7 @@ void spy_run(spy_state* S, const u8* code) {
 				if (S->flags & FLAG_CMP) {
 					S->reg[IP] = a;
 				}
+				break;
 			case 0x64:	// JIF
 				if (!S->flags & FLAG_CMP) {
 					S->reg[IP] = a;
@@ -280,7 +289,7 @@ void spy_readAndRun(spy_state* S, const s8* filename) {
 	memcpy(&datastart, &contents[0], sizeof(u64));
 	memcpy(&codestart, &contents[8], sizeof(u64));
 
-	for (u32 i = 0; i < SIZE_ROM; i += sizeof(f64)) {
+	for (u32 i = START_ROM; i < START_ROM + SIZE_ROM; i += sizeof(f64)) {
 		if (datastart + i >= codestart) {
 			break;
 		}
@@ -290,6 +299,19 @@ void spy_readAndRun(spy_state* S, const s8* filename) {
 	spyL_loadlibs(S);	
 	spy_run(S, &contents[(u64)codestart]);
 	spy_debug(S);
+}
+
+void spy_runtimeError(spy_state* S, const s8* format, ...) {
+	
+	va_list args;
+	va_start(args, format);	
+
+	printf("Spyre runtime error: ");
+	vprintf(format, args);
+	printf("\n");
+
+	va_end(args);
+
 }
 
 void spy_debug(spy_state* S) {

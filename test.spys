@@ -1,29 +1,12 @@
 __DATA__
-let print	"print"
-let println	"println"
-let message "ooooo"
-let format	"%s"
+let malloc 	"alloc"
 
 __CODE__
 jmp			start
 
-factorial:
-	le		rex, 1
-	jif		not1
-	mov		rax, 1
-	ret
-not1:
-	push	rex
-	sub		rex, 1
-	call	factorial
-	pop		rex
-	mul		rax, rex
-	ret
-
 start:
-	mov		rex, format
-	mov		rfx, message
-	push	2
-	ccall	println
+	push 	1
+	mov		rex, 10
+	ccall	malloc
 
 	exit
