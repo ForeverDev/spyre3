@@ -12,11 +12,11 @@ int main(int argc, char** argv) {
 	lua_State* L = luaL_newstate();
 	luaL_openlibs(L);
 
-	if (luaL_dofile(L, "sfinal.lua")) {
+	if (luaL_dofile(L, "scompile2.lua")) {
 		printf("lua error: %s\n", lua_tostring(L, -1));
 		return 1;
 	}
-	lua_getglobal(L, "sfinal_main");
+	lua_getglobal(L, "scompile2_main");
 	lua_pushstring(L, "test.spys");
 	if (lua_pcall(L, 1, 0, 0)) {
 		printf("lua error: %s\n", lua_tostring(L, -1));
