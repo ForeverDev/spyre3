@@ -241,7 +241,10 @@ void spy_run(spy_state* S, const u8* code) {
 				s8* bp = buf;
 				u8 foundfunc = 0;
 				u8 nargs = (u8)S->mem[(u64)S->reg[SP]++];
-				while ((*bp++ = S->mem[(u64)a])) a += 8;
+				while (S->mem[(u64)a]) {
+					*bp++ = S->mem[(u64)a++];
+				}
+				// todo fix me
 				*bp = 0;
 				for (u8 i = 0; i < S->nfuncs; i++) {
 					if (!strcmp(S->cfuncs[i].identifier, buf)) {
@@ -282,20 +285,20 @@ void spy_readAndRun(spy_state* S, const s8* filename) {
 	fread(contents, len, 1, f);
 	contents[len] = 0;
 
-	f64 datastart;
-	f64 codestart;
+	u32 datastart;
+	u32 codestart;
 
 	// read the file headers (see opdocs.txt for details)
-	memcpy(&datastart, &contents[0], sizeof(u64));
-	memcpy(&codestart, &contents[8], sizeof(u64));
+	memcpy(&datastart, &contents[0], sizeof(u32));
+	memcpy(&codestart, &contents[4], sizeof(u32));
 
-	for (u32 i = START_ROM; i < START_ROM + SIZE_ROM; i += sizeof(f64)) {
+	for (u32 i = START_ROM; i < START_ROM + SIZE_ROM; i++) {
 		if (datastart + i >= codestart) {
 			break;
 		}
-		memcpy(&S->mem[i], &contents[(u64)datastart + i], sizeof(f64));
+		S->mem[i] = (f64)contents[(u64)datastart + i];
 	}
-	
+
 	spyL_loadlibs(S);	
 	spy_run(S, &contents[(u64)codestart]);
 	spy_debug(S);

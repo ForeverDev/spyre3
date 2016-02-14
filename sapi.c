@@ -17,20 +17,17 @@ void spy_pushcfunction(spy_state* S, const s8* name, void (*f)(spy_state*, u8)) 
 	S->cfuncs[S->nfuncs++] = func;
 }
 
-u64 spy_pushstring(spy_state* S, const s8* str) {
-	u64 head = (u64)S->reg[SP] - 1;
+void spy_pushstring(spy_state* S, const s8* str) {
+	// TODO fix this, somehow the writing offset is fucked
+	// possible fix: push string in reverse order?
 	while (*str) {
 		S->mem[(u64)--S->reg[SP]] = *str++;		
 	}
 	S->mem[(u64)--S->reg[SP]] = 0;
-	return head;
 }
 
-u64 spy_pushchar(spy_state* S, s8 c) {
-	u64 head = (u64)S->reg[SP] - 1;
+void spy_pushchar(spy_state* S, s8 c) {
 	S->mem[(u64)--S->reg[SP]] = c;
-	S->mem[(u64)--S->reg[SP]] = 0;
-	return head;
 }
 
 void spy_setmem(spy_state* S, u64 addr, f64 val) {
@@ -65,13 +62,20 @@ s8* spy_getstr(spy_state* S, const s8* regname, s8* buf) {
 	s8* start = buf;
 	u64 ptr = (u64)spy_getregister(S, regname);
 	while (S->mem[(u64)ptr]) {
-		*buf++ = (s8)S->mem[(u64)ptr];
-		ptr += 8;
+		*buf++ = (s8)S->mem[(u64)ptr++];
 	}
-	*buf++ = 0;
+	*buf = 0;
 	return start;
 }
 
 s8 spy_getchar(spy_state* S, const s8* regname) {
 	return (s8)spy_getregister(S, regname);
+}
+
+s64 spy_getint(spy_state* S, const s8* regname) {
+	return (s64)spy_getregister(S, regname);
+}
+
+f64 spy_getfloat(spy_state* S, const s8* regname) {
+	return (f64)spy_getregister(S, regname);
 }

@@ -50,8 +50,8 @@ OPCODE	NAME	VALID MODES
 ---------- BYTECODE FILE HEADERS -------
 BYTES		DESCRIBES
 
-[0, 8)		starting location of ROM section
-[8, 16)		starting location of code section
+[0, 4)		starting location of ROM section
+[4, 8)		starting location of code section
 
 ---------- REGISTERS -------------------
 CODE	  NAME	  PURPOSE

@@ -111,18 +111,13 @@ function compile:convert()
 	for i, v in ipairs(self.tokens) do
 		if v.word == "let" then
 			local val = self.tokens[i + 2]
-			local ptr = #rom
+			local ptr = #rom 
 			if val.typeof == "STRING" then
 				-- TODO write chars not doubles
 				for j = 1, val.word:len() do
-					local format = string.pack("d", string.byte(val.word:sub(j, j)))
-					for q = 1, format:len() do
-						table.insert(rom, string.byte(format:sub(q, q)))
-					end
+					table.insert(rom, string.byte(val.word:sub(j, j)))
 				end
-				for j = 1, 8 do
-					table.insert(rom, 0)
-				end
+				table.insert(rom, 0)
 			end
 			for j = i + 3, #self.tokens do
 				if self.tokens[j].word == self.tokens[i + 1].word then
@@ -171,9 +166,9 @@ function compile:convert()
 	end
 	-- write the file headers into the self.bytecode table
 	-- data start header
-	self:writeFormatted("d", 16)
+	self:writeFormatted("<I4", 8)
 	-- code start header
-	self:writeFormatted("d", 16 + #rom)
+	self:writeFormatted("<I4", 8 + #rom)
 	-- write ROM
 	for i, v in ipairs(rom) do
 		table.insert(self.bytecode, v)

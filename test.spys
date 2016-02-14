@@ -1,56 +1,42 @@
 __DATA__
-let malloc 	"malloc"
-let println	"println"
-let free	"free"
-let format  "mem[0] = %d, mem[99] = %d"
+let println 	"println"
+let print 		"print"
+let getstr 		"getstr"
+let strlen		"strlen"
+
+let	message		"Enter a string and this program will tell you the length of it: "
+let output		"The length of the string you entered is: %d"
 
 __CODE__
-jmp			start
 
-; ptr test(s)
-; generates an array of size s allocated
-; on the heap.  ptr[0] is 1, ptr[s - 1] is s
+jmp 		start
+
 test:
 	push	rbp
 	mov		rbp, rsp
-	sub		rsp, 2
 
-	; allocate space for the array	
-	mov		rex, rex
+	mov		rex, message
 	push	1
-	ccall	malloc
-	mov		[rbp - 1], rax
+	ccall	print
 
-	; set a counting variable, will be used
-	; to set values in the array
-	mov		[rbp - 2], rex
+	push	0
+	ccall	getstr
 
-	; now loop
-loop:
-	gt		[rbp - 2], 0
-	jif		done
-	mov		rbx, [rbp - 1]
-	add		rbx, [rbp - 2]
-	mov		rcx, [rbp - 2]
-	mov		[rbx + 0], rcx
-	sub		[rbp - 2], 1
-	jmp 	loop
+	mov		rex, rax
+	push	1
+	ccall	strlen
 
-done:
+	mov		rex, output
+	mov		rfx, rax
+	push	2
+	ccall	println	
+
 	mov		rsp, rbp
 	pop		rbp
 	ret
 
 start:
-	mov		rex, 100
+	
 	call 	test
 
-	mov		rex, format
-	mov		rfx, [rax + 1]
-	mov		rgx, [rax + 100]
-	push	3
-	ccall	println
-
 	exit
-
-
