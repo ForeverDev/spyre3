@@ -6,7 +6,7 @@
 // TODO make some of these functions inline
 
 void 			spy_pushcfunction(spy_state*, const s8*, void (*)(spy_state*, u8));
-void			spy_pushstring(spy_state*, const s8*);
+u64				spy_pushstring(spy_state*, const s8*);
 void			spy_pushchar(spy_state*, s8);
 
 void			spy_setmem(spy_state*, u64, f64);

@@ -17,13 +17,14 @@ void spy_pushcfunction(spy_state* S, const s8* name, void (*f)(spy_state*, u8)) 
 	S->cfuncs[S->nfuncs++] = func;
 }
 
-void spy_pushstring(spy_state* S, const s8* str) {
-	// TODO fix this, somehow the writing offset is fucked
-	// possible fix: push string in reverse order?
+u64 spy_pushstring(spy_state* S, const s8* str) {
+	while (*++str);
+	str--;
+	spy_pushchar(S, 0);
 	while (*str) {
-		S->mem[(u64)--S->reg[SP]] = *str++;		
+		spy_pushchar(S, *str--);
 	}
-	S->mem[(u64)--S->reg[SP]] = 0;
+	return (u64)spy_getregister(S, "RSP");
 }
 
 void spy_pushchar(spy_state* S, s8 c) {

@@ -14,6 +14,7 @@ void spyL_loadlibs(spy_state* S) {
 	spy_pushcfunction(S, "fprintf", spyL_io_fprintf);
 	spy_pushcfunction(S, "fputstr", spyL_io_fputstr);
 	spy_pushcfunction(S, "fputchar", spyL_io_fputchar);
+	spy_pushcfunction(S, "fputnum", spyL_io_fputnum);
 
 	spy_pushcfunction(S, "strlen", spyL_str_strlen);
 
@@ -119,7 +120,14 @@ void spyL_io_fputchar(spy_state* S, u8 nargs) {
 
 void spyL_io_fputnum(spy_state* S, u8 nargs) {
 	FILE* f;
-	f = (FILE*)spy_get
+	f64 n;
+	s8 word[128];
+	s8* bp = word;
+	f = (FILE*)spy_getcptr(S, "REX");
+	n = spy_getregister(S, "RFX");
+	sprintf(word, "%lld", (s64)n);
+	fputs(word, f);
+	spy_setregister(S, "RAX", 0);
 }
 
 // STRING LIBRARY

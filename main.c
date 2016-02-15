@@ -4,12 +4,14 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
+#include "slex-byte.h"
 #include "spyre.h"
 
 int main(int argc, char** argv) {
 
 	spy_state* S = spy_newstate();
 	
+	/*	
 	lua_State* L = luaL_newstate();
 	luaL_openlibs(L);
 	
@@ -23,6 +25,9 @@ int main(int argc, char** argv) {
 		printf("lua error: %s\n", lua_tostring(L, -1));
 		return 1;
 	}
+	*/
+	lexb_state* L = lexb_newstate();
+	lexb_readAndTokenize(L, argv[1]);
 
 	char newfn[1024];
 	int len;
