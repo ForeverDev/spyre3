@@ -40,14 +40,32 @@ void spy_setregister(spy_state* S, const s8* name, f64 val) {
 	S->reg[i - 1] = val;
 }
 
+void spy_regcpy(spy_state* S, const s8* regname, const void* src, size_t size) {
+	memcpy(spy_getregaddr(S, regname), &src, size);
+}
+
+void* spy_getptr(spy_state* S, const s8* regname) {
+	u64 ptr;
+	f64 fptr;
+	fptr = spy_getregister(S, regname);
+	memcpy(&ptr, &fptr, sizeof(u64));
+	return (void*)ptr;
+}
+
 f64 spy_getmem(spy_state* S, u64 addr) {
 	return S->mem[addr];
 }
 
-f64 spy_getregister(spy_state* S, const s8* name) {
+f64 spy_getregister(spy_state* S, const s8* regname) {
 	u8 i = 0;
-	while (strncmp(name, registers[i++], 3));
+	while (strncmp(regname, registers[i++], 3));
 	return S->reg[i - 1];
+}
+
+f64* spy_getregaddr(spy_state* S, const s8* regname) {
+	u8 i = 0;
+	while (strncmp(regname, registers[i++], 3));
+	return &S->reg[i - 1];
 }
 
 const s8* spy_getarg(spy_state* S, u8 argn) {

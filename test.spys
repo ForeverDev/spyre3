@@ -1,42 +1,56 @@
 __DATA__
 let println 	"println"
-let print 		"print"
-let getstr 		"getstr"
-let strlen		"strlen"
+let fopen		"fopen"
+let fclose		"fclose"
+let fputstr		"fputstr"
 
-let	message		"Enter a string and this program will tell you the length of it: "
-let output		"The length of the string you entered is: %d"
+let filename	"testing.txt"
+let filemode	"wb"
+let	string		"fuck this shit lol"
 
 __CODE__
-
 jmp 		start
 
-test:
+fuckfiles:
 	push	rbp
 	mov		rbp, rsp
+	sub		rsp, 4
 
-	mov		rex, message
-	push	1
-	ccall	print
+	; [rbp - 1] arg 	filename
+	; [rbp - 2] arg 	string_to_write
+	; [rbp - 3] arg		loopcount
+	mov		[rbp - 1], rex
+	mov		[rbp - 2], rfx
+	mov		[rbp - 3], rgx
 
-	push	0
-	ccall	getstr
-
-	mov		rex, rax
-	push	1
-	ccall	strlen
-
-	mov		rex, output
-	mov		rfx, rax
+	mov		rex, [rbp - 1]
+	mov		rfx, filemode
 	push	2
-	ccall	println	
+	ccall	fopen
+	; [rbp - 4] local	file
+	mov		[rbp - 4], rax
 
+loop:
+	gt		[rbp - 3], 0
+	jif		done
+	
+	mov		rex, [rbp - 4]
+	mov		rfx, [rbp - 2]
+	push	2
+	ccall	fputstr
+			
+	sub		[rbp - 3], 1	
+	jmp		loop
+done:	
 	mov		rsp, rbp
 	pop		rbp
 	ret
 
 start:
 	
-	call 	test
+	mov		rex, filename
+	mov		rfx, string
+	mov		rgx, 1 
+	call	fuckfiles
 
 	exit

@@ -134,6 +134,7 @@ void spy_run(spy_state* S, const u8* code) {
 				S->reg[IP] += sizeof(u64);
 				break;
 		}
+		printf("%x\t%x\t%d\t%d\t%d\n", opcode, mode, (u32)a, (u32)b, (u32)c);
 		// now, test opcode again and use a, b and c accordingly
 		switch (opcode) {
 			case 0x00:	// NULL

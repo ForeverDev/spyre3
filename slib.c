@@ -10,6 +10,9 @@ void spyL_loadlibs(spy_state* S) {
 	spy_pushcfunction(S, "println", spyL_io_println);	
 	spy_pushcfunction(S, "getchar", spyL_io_getchar);
 	spy_pushcfunction(S, "getstr", spyL_io_getstr);
+	spy_pushcfunction(S, "fopen", spyL_io_fopen);
+	spy_pushcfunction(S, "fclose", spyL_io_fclose);
+	spy_pushcfunction(S, "fputstr", spyL_io_fputstr);
 
 	spy_pushcfunction(S, "strlen", spyL_str_strlen);
 
@@ -17,7 +20,7 @@ void spyL_loadlibs(spy_state* S) {
 	spy_pushcfunction(S, "free", spyL_mem_free);
 }
 
-// void println(rex=format, rfx=...);
+// void println(format, ...);
 void spyL_io_print(spy_state* S, u8 nargs) {
 	static s8 printfmt[1024];
 	static s8 genbuf[1024];
@@ -51,7 +54,7 @@ void spyL_io_print(spy_state* S, u8 nargs) {
 	spy_setregister(S, "RAX", 0);
 }
 
-// void println(rex=format, rfx=...);
+// void println(format, ...);
 void spyL_io_println(spy_state* S, u8 nargs) {
 	spyL_io_print(S, nargs);
 	printf("\n");
@@ -82,6 +85,30 @@ void spyL_io_getstr(spy_state* S, u8 nargs) {
 	spy_setregister(S, "RAX", spy_getregister(S, "RSP"));
 }
 
+void spyL_io_fopen(spy_state* S, u8 nargs) {
+	FILE* f;
+	s8 fname[1024];
+	s8 fmode[4];
+	spy_getstr(S, "REX", fname);
+	spy_getstr(S, "RFX", fmode);
+	f = fopen(fname, fmode);
+	spy_regcpy(S, "RAX", f, sizeof(FILE*));
+}
+
+void spyL_io_fclose(spy_state* S, u8 nargs) {
+	FILE* f = (FILE*)spy_getptr(S, "REX");
+	fclose(f);	// seg fault when i call fclose
+}
+
+void spyL_io_fputstr(spy_state* S, u8 nargs) {
+	FILE* f;
+	s8 str[1024];
+	f = (FILE*)spy_getptr(S, "REX");
+	spy_getstr(S, "RFX", str);
+	fputs(str, f);
+	spy_setregister(S, "RAX", 0);
+}
+
 // STRING LIBRARY
 
 void spyL_str_strlen(spy_state* S, u8 nargs) {
@@ -95,7 +122,7 @@ void spyL_str_strlen(spy_state* S, u8 nargs) {
 
 // MEMORY MANAGEMENT LIBRARY
 
-// void* malloc(rex=size);
+// void* malloc(size);
 void spyL_mem_malloc(spy_state* S, u8 nargs) {
 	u32 head = START_MEMORY;
 	f64 mem;
@@ -106,7 +133,7 @@ void spyL_mem_malloc(spy_state* S, u8 nargs) {
 	spy_setregister(S, "RAX", head);
 }
 
-// void free(rex=ptr);
+// void free(ptr);
 void spyL_mem_free(spy_state* S, u8 nargs) {
 	spy_setmem(S, spy_getregister(S, "REX"), 0);
 }
