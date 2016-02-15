@@ -6,12 +6,12 @@
 // IO LIBRARY
 
 void spyL_loadlibs(spy_state* S) {
-	spy_pushcfunction(S, "print", spyL_io_print);	
-	spy_pushcfunction(S, "println", spyL_io_println);	
+	spy_pushcfunction(S, "printf", spyL_io_printf);	
 	spy_pushcfunction(S, "getchar", spyL_io_getchar);
 	spy_pushcfunction(S, "getstr", spyL_io_getstr);
 	spy_pushcfunction(S, "fopen", spyL_io_fopen);
 	spy_pushcfunction(S, "fclose", spyL_io_fclose);
+	spy_pushcfunction(S, "fprintf", spyL_io_fprintf);
 	spy_pushcfunction(S, "fputstr", spyL_io_fputstr);
 	spy_pushcfunction(S, "fputchar", spyL_io_fputchar);
 
@@ -22,7 +22,7 @@ void spyL_loadlibs(spy_state* S) {
 }
 
 // void println(format, ...);
-void spyL_io_print(spy_state* S, u8 nargs) {
+void spyL_io_printf(spy_state* S, u8 nargs) {
 	static s8 printfmt[1024];
 	static s8 genbuf[1024];
 	s8* pf = printfmt;
@@ -53,12 +53,6 @@ void spyL_io_print(spy_state* S, u8 nargs) {
 		}
 	}
 	spy_setregister(S, "RAX", 0);
-}
-
-// void println(format, ...);
-void spyL_io_println(spy_state* S, u8 nargs) {
-	spyL_io_print(S, nargs);
-	printf("\n");
 }
 
 // char getchar();
@@ -98,7 +92,11 @@ void spyL_io_fopen(spy_state* S, u8 nargs) {
 
 void spyL_io_fclose(spy_state* S, u8 nargs) {
 	FILE* f = (FILE*)spy_getptr(S, "REX");
-	fclose(f);	// seg fault when i call fclose
+	fclose(f);
+}
+
+void spyL_io_fprintf(spy_state* S, u8 nargs) {
+	// TODO
 }
 
 void spyL_io_fputstr(spy_state* S, u8 nargs) {

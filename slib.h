@@ -5,13 +5,13 @@
 
 void 		spyL_loadlibs(spy_state*);
 
-static void spyL_io_print(spy_state*, u8);
-static void spyL_io_println(spy_state*, u8);
+static void spyL_io_printf(spy_state*, u8);
 static void	spyL_io_getchar(spy_state*, u8);
 static void spyL_io_getln(spy_state*, u8);
 static void spyL_io_getstr(spy_state*, u8);
 static void spyL_io_fopen(spy_state*, u8);
 static void spyL_io_fclose(spy_state*, u8);
+static void spyL_io_fprintf(spy_state*, u8);
 static void spyL_io_fputstr(spy_state*, u8);
 static void spyL_io_fputchar(spy_state*, u8);
 

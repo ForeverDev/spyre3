@@ -1,35 +1,40 @@
 __DATA__
-let println 	"println"
-let print		"print"
-let	getstr		"getstr"
-let fopen		"fopen"
-let fclose		"fclose"
-let fputstr		"fputstr"
-let	fputchar	"fputchar"
+let printf			"printf"
+let getstr			"getstr"
+let fopen			"fopen"
+let fclose			"fclose"
+let fputstr			"fputstr"
+let fputchar		"fputchar"
 
-let filename	"testing.txt"
-let openfile_w	"w"
-let openfile_r	"r"
-let errmsg		"Couldn't open file '%s', abort"
-let	writeprompt	"Enter a string to write: "
-let fileprompt	"Enter a file name to write to (including extension): "
+let filename		"testing.txt"
+let openfile_w		"w"
+let openfile_r		"r"
+let errmsg			"Couldn't open file '%s', abort\n"
+let writeprompt		"Enter a string to write: "
+let fileprompt		"Enter a file name to write to (including extension): "
 
 __CODE__
 jmp 		start
 
-fuckfiles:
+; void dofile(num loopcount)
+dofile:
 	mov		rbp, rsp
 	sub		rsp, 4
 
-	; [rbp - 1] loopcount
+	; [rbp - 1] = loopcount
+	; [rbp - 2] = filename
+	; [rbp - 3] = fileptr
+	; [rbp - 4] = string to write
+
+	; set [rbp - 1]
 	mov		[rbp - 1], rex
 	
 	; prompt user for a file name	
 	mov		rex, fileprompt
 	push	1
-	ccall	print
+	ccall	printf
 
-	; [rbp - 2] filename
+	; set [rbp - 2]
 	push	0
 	ccall	getstr
 	mov		[rbp - 2], rax
@@ -47,7 +52,7 @@ fuckfiles:
 	mov		rex, errmsg
 	mov		rfx, [rbp - 2]
 	push	2
-	ccall	println
+	ccall	printf
 	jmp		done
 fileExists:
 	; close the file that was opened to check existence
@@ -55,7 +60,7 @@ fileExists:
 	push	1
 	ccall	fclose
 
-	; [rbp - 3] file
+	; set [rbp - 3]
 	mov		rex, [rbp - 2]
 	mov		rfx, openfile_w
 	push	2
@@ -65,9 +70,9 @@ fileExists:
 	; prompt user for a string to write
 	mov		rex, writeprompt
 	push	1
-	ccall	print
+	ccall	printf
 
-	; [rbp - 4] entered string
+	; set [rbp - 4]
 	push	0
 	ccall	getstr
 	mov		[rbp - 4], rax
@@ -103,6 +108,6 @@ done:
 
 start:
 	mov		rex, 10
-	call	fuckfiles
+	call	dofile
 
 	exit
