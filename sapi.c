@@ -44,7 +44,7 @@ void spy_regcpy(spy_state* S, const s8* regname, const void* src, size_t size) {
 	memcpy(spy_getregaddr(S, regname), &src, size);
 }
 
-void* spy_getptr(spy_state* S, const s8* regname) {
+void* spy_getcptr(spy_state* S, const s8* regname) {
 	u64 ptr;
 	f64 fptr;
 	fptr = spy_getregister(S, regname);
