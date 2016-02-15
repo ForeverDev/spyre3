@@ -1,56 +1,108 @@
 __DATA__
 let println 	"println"
+let print		"print"
+let	getstr		"getstr"
 let fopen		"fopen"
 let fclose		"fclose"
 let fputstr		"fputstr"
+let	fputchar	"fputchar"
 
 let filename	"testing.txt"
-let filemode	"wb"
-let	string		"fuck this shit lol"
+let openfile_w	"w"
+let openfile_r	"r"
+let errmsg		"Couldn't open file '%s', abort"
+let	writeprompt	"Enter a string to write: "
+let fileprompt	"Enter a file name to write to (including extension): "
 
 __CODE__
 jmp 		start
 
 fuckfiles:
-	push	rbp
 	mov		rbp, rsp
 	sub		rsp, 4
 
-	; [rbp - 1] arg 	filename
-	; [rbp - 2] arg 	string_to_write
-	; [rbp - 3] arg		loopcount
+	; [rbp - 1] loopcount
 	mov		[rbp - 1], rex
-	mov		[rbp - 2], rfx
-	mov		[rbp - 3], rgx
+	
+	; prompt user for a file name	
+	mov		rex, fileprompt
+	push	1
+	ccall	print
 
-	mov		rex, [rbp - 1]
-	mov		rfx, filemode
+	; [rbp - 2] filename
+	push	0
+	ccall	getstr
+	mov		[rbp - 2], rax
+
+	; first, check if the file exists by doing fopen(filename, "r")
+	; if it doesn't exist, return
+	; note we store the file in [rbp - 3]
+	mov		rex, [rbp - 2]
+	mov		rfx, openfile_r
 	push	2
 	ccall	fopen
-	; [rbp - 4] local	file
-	mov		[rbp - 4], rax
-
-loop:
-	gt		[rbp - 3], 0
-	jif		done
-	
-	mov		rex, [rbp - 4]
+	mov		[rbp - 3], rax
+	cmp		[rbp - 3], 0
+	jif		fileExists
+	mov		rex, errmsg
 	mov		rfx, [rbp - 2]
 	push	2
-	ccall	fputstr
-			
-	sub		[rbp - 3], 1	
+	ccall	println
+	jmp		done
+fileExists:
+	; close the file that was opened to check existence
+	mov		rex, [rbp - 3]
+	push	1
+	ccall	fclose
+
+	; [rbp - 3] file
+	mov		rex, [rbp - 2]
+	mov		rfx, openfile_w
+	push	2
+	ccall	fopen
+	mov		[rbp - 3], rax
+
+	; prompt user for a string to write
+	mov		rex, writeprompt
+	push	1
+	ccall	print
+
+	; [rbp - 4] entered string
+	push	0
+	ccall	getstr
+	mov		[rbp - 4], rax
+
+	; now write that string to the file however
+	; many times specified in loopcount
+loop:
+	gt		[rbp - 1], 0
+	jif		endloop
+
+	; write string to file
+	mov		rex, [rbp - 3]
+	mov		rfx, [rbp - 4]
+	push	2
+	ccall	fputstr	
+
+	; append a newline
+	mov		rex, [rbp - 3]
+	mov		rfx, 10
+	push	2
+	ccall	fputchar
+	
+	sub		[rbp - 1], 1
 	jmp		loop
-done:	
+endloop:
+	mov		rex, [rbp - 3]
+	push	1
+	ccall	fclose
+	
+done:
 	mov		rsp, rbp
-	pop		rbp
 	ret
 
 start:
-	
-	mov		rex, filename
-	mov		rfx, string
-	mov		rgx, 1 
+	mov		rex, 10
 	call	fuckfiles
 
 	exit

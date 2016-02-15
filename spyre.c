@@ -91,9 +91,9 @@ void spy_run(spy_state* S, const u8* code) {
 	while (1) {
 		u8 opcode = code[(u64)S->reg[IP]++];
 		u8 mode = code[(u64)S->reg[IP]++];
-		f64 a;					
-		f64 b;
-		f64 c;
+		f64 a = 0;					
+		f64 b = 0;
+		f64 c = 0;
 		// first, assign (a, b, c) correctly based on the mode
 		switch (mode) {
 			case 0:
@@ -102,7 +102,7 @@ void spy_run(spy_state* S, const u8* code) {
 				a = code[(u64)S->reg[IP]++];
 				break;
 			case 2:
-				a = code[(u8)S->reg[IP]++];
+				a = code[(u64)S->reg[IP]++];
 				memcpy(&b, &code[(u64)S->reg[IP]], sizeof(f64));
 				S->reg[IP] += sizeof(f64);
 				break;
@@ -134,7 +134,6 @@ void spy_run(spy_state* S, const u8* code) {
 				S->reg[IP] += sizeof(u64);
 				break;
 		}
-		printf("%x\t%x\t%d\t%d\t%d\n", opcode, mode, (u32)a, (u32)b, (u32)c);
 		// now, test opcode again and use a, b and c accordingly
 		switch (opcode) {
 			case 0x00:	// NULL
@@ -302,7 +301,7 @@ void spy_readAndRun(spy_state* S, const s8* filename) {
 
 	spyL_loadlibs(S);	
 	spy_run(S, &contents[(u64)codestart]);
-	spy_debug(S);
+	//spy_debug(S);
 }
 
 void spy_runtimeError(spy_state* S, const s8* format, ...) {

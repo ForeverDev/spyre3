@@ -13,6 +13,7 @@ void spyL_loadlibs(spy_state* S) {
 	spy_pushcfunction(S, "fopen", spyL_io_fopen);
 	spy_pushcfunction(S, "fclose", spyL_io_fclose);
 	spy_pushcfunction(S, "fputstr", spyL_io_fputstr);
+	spy_pushcfunction(S, "fputchar", spyL_io_fputchar);
 
 	spy_pushcfunction(S, "strlen", spyL_str_strlen);
 
@@ -106,6 +107,15 @@ void spyL_io_fputstr(spy_state* S, u8 nargs) {
 	f = (FILE*)spy_getptr(S, "REX");
 	spy_getstr(S, "RFX", str);
 	fputs(str, f);
+	spy_setregister(S, "RAX", 0);
+}
+
+void spyL_io_fputchar(spy_state* S, u8 nargs) {
+	FILE* f;
+	s8 c;
+	f = (FILE*)spy_getptr(S, "REX");
+	c = spy_getchar(S, "RFX");
+	fputc(c, f);
 	spy_setregister(S, "RAX", 0);
 }
 
