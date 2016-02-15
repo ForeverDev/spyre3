@@ -14,6 +14,7 @@ static void spyL_io_fclose(spy_state*, u8);
 static void spyL_io_fprintf(spy_state*, u8);
 static void spyL_io_fputstr(spy_state*, u8);
 static void spyL_io_fputchar(spy_state*, u8);
+static void spyL_io_fputnum(spy_state*, u8);
 
 static void spyL_str_strlen(spy_state*, u8);
 static void spyL_str_strcmp(spy_state*, u8);

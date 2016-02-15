@@ -91,7 +91,7 @@ void spyL_io_fopen(spy_state* S, u8 nargs) {
 }
 
 void spyL_io_fclose(spy_state* S, u8 nargs) {
-	FILE* f = (FILE*)spy_getptr(S, "REX");
+	FILE* f = (FILE*)spy_getcptr(S, "REX");
 	fclose(f);
 }
 
@@ -102,7 +102,7 @@ void spyL_io_fprintf(spy_state* S, u8 nargs) {
 void spyL_io_fputstr(spy_state* S, u8 nargs) {
 	FILE* f;
 	s8 str[1024];
-	f = (FILE*)spy_getptr(S, "REX");
+	f = (FILE*)spy_getcptr(S, "REX");
 	spy_getstr(S, "RFX", str);
 	fputs(str, f);
 	spy_setregister(S, "RAX", 0);
@@ -111,10 +111,15 @@ void spyL_io_fputstr(spy_state* S, u8 nargs) {
 void spyL_io_fputchar(spy_state* S, u8 nargs) {
 	FILE* f;
 	s8 c;
-	f = (FILE*)spy_getptr(S, "REX");
+	f = (FILE*)spy_getcptr(S, "REX");
 	c = spy_getchar(S, "RFX");
 	fputc(c, f);
 	spy_setregister(S, "RAX", 0);
+}
+
+void spyL_io_fputnum(spy_state* S, u8 nargs) {
+	FILE* f;
+	f = (FILE*)spy_get
 }
 
 // STRING LIBRARY

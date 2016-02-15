@@ -244,7 +244,6 @@ void spy_run(spy_state* S, const u8* code) {
 				while (S->mem[(u64)a]) {
 					*bp++ = S->mem[(u64)a++];
 				}
-				// todo fix me
 				*bp = 0;
 				for (u8 i = 0; i < S->nfuncs; i++) {
 					if (!strcmp(S->cfuncs[i].identifier, buf)) {
