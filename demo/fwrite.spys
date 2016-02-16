@@ -1,3 +1,5 @@
+let something "hello, world %d %dllol"
+
 start:
 	
 	mov		rax, [rbp - 1]

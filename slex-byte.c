@@ -86,10 +86,20 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 	// handle tokens
 	s8* p = L->source.contents;
 	s8  buf[1024];
+	s8  strbuf[1024];
 	s8* bp = buf;
+	s8* sbp = strbuf;
 	while ((c = *p)) {
-		// handle identifiers
-		if (isalnum(c)) {
+		// handle strings
+		if (c == '"') {
+			while ((c = *++p) != '"') {
+				*sbp++ = c;
+			}
+			p++;
+			*sbp = 0;
+			lexb_pushtoken(L, STRING, strbuf);
+		// handle identifiers / keywords / registers
+		} else if (isalnum(c)) {
 			while (isalnum((c = *p++))) {
 				*bp++ = c;
 			}
@@ -99,7 +109,6 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 			lexb_pushtoken(L, IDENTIFIER, buf);
 		// handle punctuation (operators, etc)
 		} else if (ispunct(c)) {
-			printf("%c\n", c);
 			buf[0] = c;
 			buf[1] = 0;
 			lexb_pushtoken(L, (
