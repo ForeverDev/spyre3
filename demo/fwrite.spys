@@ -1,1 +1,5 @@
-testing lol hi
+start:
+	
+	mov		rax, [rbp - 1]
+
+	ret

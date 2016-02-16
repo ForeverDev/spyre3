@@ -96,7 +96,21 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 			p--;
 			*bp = 0;
 			bp = buf;
-			lexb_pushtoken(L, STRING, buf);
+			lexb_pushtoken(L, IDENTIFIER, buf);
+		// handle punctuation (operators, etc)
+		} else if (ispunct(c)) {
+			printf("%c\n", c);
+			buf[0] = c;
+			buf[1] = 0;
+			lexb_pushtoken(L, (
+				c == '+' ? PLUS :
+				c == '-' ? MINUS :
+				c == '[' ? OPENSQ :
+				c == ']' ? CLOSESQ :
+				c == ':' ? COLON : 
+				c == ',' ? COMMA : 
+				UNKNOWN
+			), buf);
 		}
 		p++;	
 	}

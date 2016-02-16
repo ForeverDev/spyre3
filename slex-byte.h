@@ -4,22 +4,28 @@
 #include <stdio.h>
 #include "spyre.h"
 
+extern const s8 operators[][2];
+
 enum	lexb_token_type;
 struct	lexb_token;
 struct	lexb_state;
 
 typedef enum lexb_token_type {
 	
-	UNKNOWN		= 0,
-	HEAD		= 1,
-	TAIL		= 2,
+	UNKNOWN		= 0x00,
+	HEAD		= 0x01,
+	TAIL		= 0x02,
 	
-	IDENTIFIER,
-	OPENSQ,
-	CLOSESQ,
-	COLON,
-	NUMBER,
-	STRING
+	IDENTIFIER	= 0x03,
+	OPENSQ		= 0x04,
+	CLOSESQ		= 0x05,
+	COLON		= 0x06,
+	COMMA		= 0x07,
+	PLUS		= 0x08,
+	MINUS		= 0x09,
+	SEMICOLON 	= 0x0a,
+	NUMBER		= 0x0b,
+	STRING		= 0x0c
 
 } lexb_token_type;
 
