@@ -2,9 +2,7 @@
 #define __SLEX_BYTE_H
 
 #include <stdio.h>
-#include "spyre.h"
-
-extern const s8 operators[][2];
+#include "info.h"
 
 enum	lexb_token_type;
 struct	lexb_token;
@@ -49,8 +47,8 @@ typedef struct lexb_state {
 } lexb_state;
 
 lexb_state*	lexb_newstate();
-static void lexb_report(lexb_state*, const s8*, ...);
 static void lexb_pushtoken(lexb_state*, lexb_token_type, const s8*);
+void 		lexb_report(const s8*, ...);
 void		lexb_readAndTokenize(lexb_state*, const s8*);
 
 #endif

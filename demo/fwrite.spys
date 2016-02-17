@@ -1,5 +1,7 @@
+__DATA__
 let something "hello, world %d %dllol"
 
+__CODE__
 start:
 	
 	mov		rax, [rbp - 1]

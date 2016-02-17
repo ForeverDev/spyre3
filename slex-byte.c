@@ -2,6 +2,7 @@
 #include <stdarg.h>
 #include <string.h>
 #include <ctype.h>
+#include "scompile-byte.h"
 #include "slex-byte.h"
 
 lexb_state* lexb_newstate() {
@@ -14,7 +15,7 @@ lexb_state* lexb_newstate() {
 	return L;
 }
 
-void lexb_report(lexb_state* L, const s8* format, ...) {
+void lexb_report(const s8* format, ...) {
 	s8 buf[1024];
 	va_list args;
 	va_start(args, format);
@@ -64,7 +65,7 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 
 	L->source.handle = fopen(filename, "r");
 	if (!L->source.handle) {
-		lexb_report(L, "couldn't open file '%s'", filename);
+		lexb_report("couldn't open file '%s'", filename);
 	}
 
 	// get the length of the file, make space for the
@@ -86,21 +87,30 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 	// handle tokens
 	s8* p = L->source.contents;
 	s8  buf[1024];
-	s8  strbuf[1024];
 	s8* bp = buf;
-	s8* sbp = strbuf;
 	while ((c = *p)) {
 		// handle strings
 		if (c == '"') {
 			while ((c = *++p) != '"') {
-				*sbp++ = c;
+				*bp++ = c;
 			}
 			p++;
-			*sbp = 0;
-			lexb_pushtoken(L, STRING, strbuf);
+			*bp = 0;
+			bp = buf;
+			lexb_pushtoken(L, STRING, buf);
+		// handle numbers
+		} else if (isdigit(c)) {
+			while (isdigit(c) || c == '.' || c == 'x') {
+				*bp++ = c;
+				c = *++p;
+			}
+			p--;
+			*bp = 0;
+			bp = buf;
+			lexb_pushtoken(L, NUMBER, buf);
 		// handle identifiers / keywords / registers
-		} else if (isalnum(c)) {
-			while (isalnum((c = *p++))) {
+		} else if (isalnum(c) || c == '_') {
+			while (isalnum((c = *p++)) || c == '_') {
 				*bp++ = c;
 			}
 			p--;
@@ -124,12 +134,16 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 		p++;	
 	}
 
-	lexb_dump(L);
+	lexb_pushtoken(L, TAIL, "");
 
 	fclose(L->source.handle);
 	free(L->source.contents);
 
-	exit(0);
+	// now that we've lexed everything, pass the tokens
+	// to the bytecode compiler
+	compb_state* C = compb_newstate();
+	
+	compb_compileTokens(C, L->head, filename);
 
 }
 
