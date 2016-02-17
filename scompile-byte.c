@@ -38,17 +38,24 @@ void compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filen
 	// this is the first token in the sequence of tokens
 	lexb_token* t = token_head;
 
+	// this is the current section we're in
 	s8* current_section;
 
 	while (t->type != TAIL) {
 		switch (t->type) {
 			case HEAD:
-				continue;
 			case TAIL:
 				break;
 			case IDENTIFIER:
-				if (!strncmp(t->word, "section", 7)) {
-					printf("section found %s\n", t->word);
+				// TODO create an array of strings with register
+				// names so that we can determine whether or
+				// not the identifier is a string
+				if (0) {
+
+				} else if (!strncmp(t->word, "section", 7)) {
+					t = t->next;
+					current_section = t->word;
+					t = t->next;
 				}
 				break;
 		}
