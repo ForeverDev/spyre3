@@ -1,7 +1,7 @@
-__DATA__
+section data
 let something "hello, world %d %dllol"
 
-__CODE__
+section code
 start:
 	
 	mov		rax, [rbp - 1]

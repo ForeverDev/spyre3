@@ -38,9 +38,19 @@ void compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filen
 	// this is the first token in the sequence of tokens
 	lexb_token* t = token_head;
 
+	s8* current_section;
+
 	while (t->type != TAIL) {
 		switch (t->type) {
-				
+			case HEAD:
+				continue;
+			case TAIL:
+				break;
+			case IDENTIFIER:
+				if (!strncmp(t->word, "section", 7)) {
+					printf("section found %s\n", t->word);
+				}
+				break;
 		}
 		t = t->next;
 	}
