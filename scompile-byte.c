@@ -1,7 +1,16 @@
 #include <stdlib.h>
 #include <string.h>
 #include <stdio.h>
+#include <ctype.h>
 #include "scompile-byte.h"
+
+const s8* compb_registers[13] = {
+	"rip", "rsp", "rbp",
+	"rax", "rbx", "rcx",
+	"rdx", "rex", "rfx",
+	"rgx", "rhx", "rix",
+	"rjx"
+};
 
 compb_state* compb_newstate() {
 	
@@ -15,6 +24,18 @@ compb_state* compb_newstate() {
 	C->codep = C->code;
 
 	return C;
+
+}
+
+s32 compb_isValidRegister(compb_state* C, const s8* regname) {
+
+	for (u32 i = 0; i < 13; i++) {
+		if (!strncmp(compb_registers[i], regname, 3)) {
+			return i;
+		}
+	}
+
+	return -1;
 
 }
 
@@ -47,19 +68,24 @@ void compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filen
 			case TAIL:
 				break;
 			case IDENTIFIER:
-				// TODO create an array of strings with register
-				// names so that we can determine whether or
-				// not the identifier is a string
-				if (0) {
-
+				for (u32 i = 0; t->word[i]; i++) {
+					t->word[i] = tolower(t->word[i]);
+				}
+				if (compb_isValidRegister(C, t->word) > -1) {
+					printf("found register %s\n", t->word);	
 				} else if (!strncmp(t->word, "section", 7)) {
 					t = t->next;
 					current_section = t->word;
 					t = t->next;
 				}
 				break;
+			// to silence annoying compiler warning
+			default:
+				break;
 		}
 		t = t->next;
 	}
+
+	exit(1);
 
 }

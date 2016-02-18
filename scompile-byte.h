@@ -4,6 +4,8 @@
 #include "slex-byte.h"
 #include "info.h"
 
+extern const s8* compb_registers[13];
+
 struct 	compb_state;
 enum	compb_opcodes;
 enum	compb_registers;
@@ -46,23 +48,6 @@ typedef enum compb_opcodes {
 
 } compb_opcodes;
 
-typedef enum compb_registers {
-	
-	RIP		= 0x01,
-	RSP		= 0x02,
-	RBP		= 0x03,
-	RAX		= 0x04,
-	RBX		= 0x05,
-	RCX		= 0x06,
-	RDX		= 0x07,
-	REX		= 0x08,
-	RFX		= 0x09,
-	RGX		= 0x0a,
-	RHX		= 0x0b,
-	RIX		= 0x0c,
-	RJX		= 0x0d
-
-} compb_registers;
 
 typedef struct compb_state {
 	
@@ -77,6 +62,7 @@ typedef struct compb_state {
 } compb_state;
 
 compb_state* 	compb_newstate();
+s32				compb_isValidRegister(compb_state*, const s8*);
 void			compb_writeCodeByte(compb_state*, u8);
 void			compb_writeDataByte(compb_state*, u8);
 void			compb_compileTokens(compb_state*, lexb_token*, const s8*);
