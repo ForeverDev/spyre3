@@ -5,6 +5,7 @@
 #include "sapi.h"
 #include "slib.h"
 #include "spyre.h"
+#include "scompile-byte.h"
 
 spy_state* spy_newstate() {
 	spy_state* S = malloc(sizeof(spy_state));
@@ -84,12 +85,9 @@ spy_state* spy_newstate() {
 			
 
 void spy_run(spy_state* S, const u8* code) {
-	// data is what we use to wrap 8 bytes
-	// into a double using memcpy
-	// memcpy(data, &code[S->reg[IP]], sizeof(f64));
-	f64 data;
 	while (1) {
 		u8 opcode = code[(u64)S->reg[IP]++];
+		//printf("op %s 0x%02x\n", compb_opcodenames[opcode], opcode);
 		u8 mode = code[(u64)S->reg[IP]++];
 		f64 a = 0;					
 		f64 b = 0;
@@ -261,13 +259,13 @@ void spy_run(spy_state* S, const u8* code) {
 			case 0x62:	// JMP
 				S->reg[IP] = a;
 				break;
-			case 0x63:	// JIT
-				if (S->flags & FLAG_CMP) {
+			case 0x63:	// JIF
+				if (!S->flags & FLAG_CMP) {
 					S->reg[IP] = a;
 				}
 				break;
-			case 0x64:	// JIF
-				if (!S->flags & FLAG_CMP) {
+			case 0x64:	// JIT
+				if (S->flags & FLAG_CMP) {
 					S->reg[IP] = a;
 				}
 				break;

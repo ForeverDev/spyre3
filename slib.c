@@ -88,7 +88,11 @@ void spyL_io_fopen(spy_state* S, u8 nargs) {
 	spy_getstr(S, "REX", fname);
 	spy_getstr(S, "RFX", fmode);
 	f = fopen(fname, fmode);
-	spy_regcpy(S, "RAX", f, sizeof(FILE*));
+	if (f) {
+		spy_regcpy(S, "RAX", f, sizeof(FILE*));
+	} else {
+		spy_setregister(S, "RAX", 0);
+	}
 }
 
 void spyL_io_fclose(spy_state* S, u8 nargs) {

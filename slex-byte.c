@@ -73,7 +73,7 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 	fseek(L->source.handle, 0, SEEK_END);
 	L->source.length = ftell(L->source.handle);
 	fseek(L->source.handle, 0, SEEK_SET);
-	L->source.contents = malloc(L->source.length * sizeof(s8));
+	L->source.contents = malloc(L->source.length * sizeof(s8) + 1);
 
 	
 	// read the contents of the file
@@ -88,9 +88,12 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 	s8* p = L->source.contents;
 	s8  buf[1024];
 	s8* bp = buf;
+	u8	next_num_neg = 0;
 	while ((c = *p)) {
 		if (c == '\n') {
 			lexb_pushtoken(L, NEWLINE, "");
+		} else if (c == ';') {
+			while ((c = *++p) != '\n');
 		// handle strings
 		} else if (c == '"') {
 			while ((c = *++p) != '"') {
@@ -101,7 +104,11 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 			lexb_pushtoken(L, STRING, buf);
 		// handle numbers
 		} else if (isdigit(c)) {
-			while (isdigit(c) || c == '.' || c == 'x') {
+			if (next_num_neg) {
+				*bp++ = '-';
+				next_num_neg = 0;
+			}
+			while (isdigit(c) || c == '.') {
 				*bp++ = c;
 				c = *++p;
 			}
@@ -119,18 +126,15 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 			bp = buf;
 			lexb_pushtoken(L, IDENTIFIER, buf);
 		// handle punctuation (operators, etc)
-		} else if (ispunct(c)) {
+		} else if (c == ':') {
 			buf[0] = c;
 			buf[1] = 0;
 			lexb_pushtoken(L, (
-				c == '+' ? PLUS :
-				c == '-' ? MINUS :
-				c == '[' ? OPENSQ :
-				c == ']' ? CLOSESQ :
 				c == ':' ? COLON : 
-				c == ',' ? COMMA : 
 				UNKNOWN
 			), buf);
+		} else if (c == '-') {
+			next_num_neg = 1;
 		}
 		p++;	
 	}
@@ -138,7 +142,6 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 	lexb_pushtoken(L, TAIL, "");
 
 	fclose(L->source.handle);
-	free(L->source.contents);
 
 	// now that we've lexed everything, pass the tokens
 	// to the bytecode compiler

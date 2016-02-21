@@ -1,12 +1,93 @@
 section data
-let another		"printf"
-let	another2	"getstring"
-let	another3	"some very long ass string"
+let	printf		"printf"
+let	getstr		"getstr"
+let fopen		"fopen"
+let fclose		"fclose"
+let fputstr		"fputstr"
+let	fputchar	"fputchar"
+
+let filename	"testing.txt"
+let openfile_w	"w"
+let openfile_r	"r"
+let errmsg		"Couldn't open file '%s', abort\n"
+let	writeprompt	"Enter a string to write: "
+let fileprompt	"Enter a file name to write to (including extension): "
 
 section code
-start:
-	
-	mov		rax, [rbp - 1]
-meme:
+jmp 		start
 
+fuckfiles:
+	mov		rbp, rsp
+	sub		rsp, 4
+
+	mov		[rbp - 1], rex
+	
+	mov		rex, fileprompt
+	push	1
+	ccall	printf
+
+	push	0
+	ccall	getstr
+	mov		[rbp - 2], rax
+
+	mov		rex, [rbp - 2]
+	mov		rfx, openfile_r
+	push	2
+	ccall	fopen
+	mov		[rbp - 3], rax
+	cmp		[rbp - 3], 0
+	jif		fileExists
+	mov		rex, errmsg
+	mov		rfx, [rbp - 2]
+	push	2
+	ccall	printf
+	jmp		done
+fileExists:
+	mov		rex, [rbp - 3]
+	push	1
+	ccall	fclose
+
+	mov		rex, [rbp - 2]
+	mov		rfx, openfile_w
+	push	2
+	ccall	fopen
+	mov		[rbp - 3], rax
+
+	mov		rex, writeprompt
+	push	1
+	ccall	printf
+
+	push	0
+	ccall	getstr
+	mov		[rbp - 4], rax
+
+loop:
+	gt		[rbp - 1], 0
+	jif		endloop
+
+	mov		rex, [rbp - 3]
+	mov		rfx, [rbp - 4]
+	push	2
+	ccall	fputstr	
+
+	mov		rex, [rbp - 3]
+	mov		rfx, 10
+	push	2
+	ccall	fputchar
+	
+	sub		[rbp - 1], 1
+	jmp		loop
+endloop:
+	mov		rex, [rbp - 3]
+	push	1
+	ccall	fclose
+	
+done:
+	mov		rsp, rbp
 	ret
+
+start:
+	mov		rex, 10
+	call	fuckfiles
+
+	exit
