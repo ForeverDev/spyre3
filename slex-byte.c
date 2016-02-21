@@ -89,12 +89,13 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 	s8  buf[1024];
 	s8* bp = buf;
 	while ((c = *p)) {
+		if (c == '\n') {
+			lexb_pushtoken(L, NEWLINE, "");
 		// handle strings
-		if (c == '"') {
+		} else if (c == '"') {
 			while ((c = *++p) != '"') {
 				*bp++ = c;
 			}
-			p++;
 			*bp = 0;
 			bp = buf;
 			lexb_pushtoken(L, STRING, buf);
@@ -113,7 +114,7 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 			while (isalnum((c = *p++)) || c == '_') {
 				*bp++ = c;
 			}
-			p--;
+			p -= 2;
 			*bp = 0;
 			bp = buf;
 			lexb_pushtoken(L, IDENTIFIER, buf);

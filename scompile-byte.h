@@ -5,6 +5,7 @@
 #include "info.h"
 
 extern const s8* compb_registers[13];
+extern const s8* compb_opcodenames[0xff];	
 
 struct 	compb_state;
 enum	compb_opcodes;
@@ -48,23 +49,39 @@ typedef enum compb_opcodes {
 
 } compb_opcodes;
 
+typedef struct compb_label {
+	
+	s8					identifier[64];
+	u32					value;
+	struct compb_label* next;
+
+} compb_label;
+
 
 typedef struct compb_state {
 	
-	FILE*	handle;
+	FILE*			handle;
 
-	s8		rom[SIZE_ROM];
-	s8*		romp;
+	s8				rom[SIZE_ROM];
+	s8*				romp;
 
-	s8		code[65536];
-	s8*		codep;
+	s8				code[65536];
+	s8*				codep;
+
+	compb_label* 	labels;
 	
 } compb_state;
 
 compb_state* 	compb_newstate();
-s32				compb_isValidRegister(compb_state*, const s8*);
-void			compb_writeCodeByte(compb_state*, u8);
-void			compb_writeDataByte(compb_state*, u8);
+
+s8				compb_getRegister(compb_state*, const s8*);
+
+s32				compb_getLabel(compb_state*, const s8*);
+void			compb_newLabel(compb_state*, const s8*, u32);
+
+s32				compb_getOpcode(compb_state*, const s8*);
+
+void			compb_strupper(compb_state*, s8*);
 void			compb_compileTokens(compb_state*, lexb_token*, const s8*);
 
 #endif

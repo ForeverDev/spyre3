@@ -23,7 +23,8 @@ typedef enum lexb_token_type {
 	MINUS		= 0x09,
 	SEMICOLON 	= 0x0a,
 	NUMBER		= 0x0b,
-	STRING		= 0x0c
+	STRING		= 0x0c,
+	NEWLINE		= 0x0d
 
 } lexb_token_type;
 

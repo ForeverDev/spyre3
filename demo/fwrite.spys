@@ -1,9 +1,12 @@
 section data
-let something "hello, world %d %dllol"
+let another		"printf"
+let	another2	"getstring"
+let	another3	"some very long ass string"
 
 section code
 start:
 	
 	mov		rax, [rbp - 1]
+meme:
 
 	ret
