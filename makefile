@@ -5,7 +5,12 @@ DEPS = build/main.o build/slex-byte.o build/scompile-byte.o build/slib.o build/s
 BUILD = build
 VPATH = src
 
-build/spy3: $(DEPS)
+all: build/spy3
+
+build:
+	mkdir build
+
+build/spy3: build $(DEPS)
 	sudo $(CC) $(CF) $(DEPS) -o spy3
 	sudo mv spy3 /usr/local/bin
 
