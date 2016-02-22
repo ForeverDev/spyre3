@@ -1,5 +1,5 @@
-OPCODE FORMATS
 
+Opcode modes
 
 MODE ID	| OPERANDS
 --------|-----
@@ -12,6 +12,8 @@ MODE ID	| OPERANDS
 6	| [(reg) + (u64)], (reg)
 7	| (u64)
 8	| [(reg) + (u64)]
+
+Opcodes
 
 OPCODE	| NAME	| VALID MODES 
 --------|-------|------------
