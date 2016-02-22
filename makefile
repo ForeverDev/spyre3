@@ -1,7 +1,7 @@
 CC = gcc
 CF = -std=c11
 LIBS = -llua -ldl -lm
-DEPS = build/main.o build/slex-byte.o build/scompile-byte.o build/slib.o build/sapi.o build/spyre.o 
+DEPS = build/main.o build/slex-byte.o build/scompile-byte.o build/slib.o build/sapi.o build/spyre.o build/slex.o
 BUILD = build
 VPATH = src
 
@@ -13,6 +13,7 @@ build:
 build/spy3: build $(DEPS)
 	sudo $(CC) $(CF) $(DEPS) -o spy3
 	sudo mv spy3 /usr/local/bin
+	rm -Rf build/*
 
 build/main.o: src/main.c
 	$(CC) $(CF) -c src/main.c -o build/main.o
@@ -31,3 +32,6 @@ build/sapi.o: src/interpreter/sapi.c
 	
 build/spyre.o: src/interpreter/spyre.c
 	$(CC) $(CF) -c src/interpreter/spyre.c -o build/spyre.o
+
+build/slex.o: src/compiler/slex.c
+	$(CC) $(CF) -c src/compiler/slex.c -o build/slex.o
