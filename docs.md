@@ -49,13 +49,11 @@ OPCODE	| NAME	| VALID MODES
 63	| JIF	| 7
 64	| JIT	| 7
 
----------- BYTECODE FILE HEADERS -------
 BYTES	| DESCRIBES
 --------|----------
 [0, 4)	| starting location of ROM section
 [4, 8)	| starting location of code section
 
----------- REGISTERS -------------------
 CODE	| NAME	| PURPOSE
 --------|-------|--------
 00	| RIP	| instruction pointer
@@ -72,12 +70,11 @@ CODE	| NAME	| PURPOSE
 0B	| RIX	| general purpose #9, holds function argument #5
 0C	| RJX	| general purpose #10, holds function argument #6
 
----------- MEMORY LAYOUT ---------------
 SECTION	| START			| FINISH	
 --------|-----------------------|-------
-ROM	| 0			| SIZE_ROM - 1
-STACK	| SIZE_ROM		| SIZE_ROM + SIZE_STACK - 1
-HEAP	| SIZE_ROM + SIZE_STACK	| SIZE_MEMORY - 1
+ROM	| 0			| SIZE\_ROM - 1
+STACK	| SIZE_ROM		| SIZE\_ROM + SIZE\_STACK - 1
+HEAP	| SIZE_ROM + SIZE_STACK	| SIZE\_MEMORY - 1
 
 
 see svm.h for size macros
