@@ -1,16 +1,17 @@
 OPCODE FORMATS
 
-instruction format:	<opcode> <mode> <a>? <b>? <c>? 	
-	MODE:
-	0 = <null>
-	1 = a(reg)
-	2 = a(reg), b(f64)
-	3 = a(reg), b(reg)
-	4 = a(reg), [b(reg) + c(u64)]
-	5 = [a(reg) + b(u64)], c(f64)
-	6 = [a(reg) + b(u64)], c(reg)
-	7 = a(u64)
-	8 = [a(reg) + b(u64)]
+
+MODE ID	| FORM
+--------|-----
+0	| <null>
+1	| (reg)
+2	| (reg), (f64)
+3	| (reg), (reg)
+4	| (reg), [(reg) + (u64)]
+5	| [(reg) + (u64)], (f64)
+6	| [(reg) + (u64)], (reg)
+7	| (u64)
+8	| [(reg) + (u64)]
 
 OPCODE	| NAME	| VALID MODES 
 --------|-------|------------
