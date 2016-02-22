@@ -241,7 +241,7 @@ void spy_run(spy_state* S, const u8* code) {
 					case 1:
 						S->reg[IP] = S->reg[(u64)a];
 						break;
-					case 2:
+					case 7:
 						S->reg[IP] = a;
 						break;
 				}

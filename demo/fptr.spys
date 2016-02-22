@@ -1,0 +1,37 @@
+; this demo shows how functions can be passed 
+; around like any number would be and then called
+
+; note that if you want to call a function via function
+; pointer, you must place the function into a register, 
+; then <call reg>
+section data
+let printf	"printf"
+let	string	"hello, world!\n"
+
+section code
+
+jmp start
+
+somefunction:
+	mov		rex, string
+	push	1
+	ccall	printf
+	ret
+
+start:
+		
+	; make space for our local
+	sub		rsp, 1
+
+	; move a function pointer into the loca
+	mov		[rbp - 1], somefunction
+
+	; now call the function
+W:a
+;wa
+W:a
+	mov		rax, [rbp - 1]
+	call	rax
+
+
+	exit
