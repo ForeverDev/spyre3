@@ -1,5 +1,11 @@
+; this demo asks the user for the name of a file
+; that file is then opened.  if the file doesn't
+; exist, the program exits and reports the message
+; if the file does exist, the user is then asked for
+; a string.  that string is then written to
+; the file 10 times
 section data
-let	printf		"printf"
+let printf		"printf"
 let	getstr		"getstr"
 let fopen		"fopen"
 let fclose		"fclose"
@@ -20,16 +26,22 @@ fuckfiles:
 	mov		rbp, rsp
 	sub		rsp, 4
 
+	; [rbp - 1] loopcount
 	mov		[rbp - 1], rex
 	
+	; prompt user for a file name	
 	mov		rex, fileprompt
 	push	1
 	ccall	printf
 
+	; [rbp - 2] filename
 	push	0
 	ccall	getstr
 	mov		[rbp - 2], rax
 
+	; first, check if the file exists by doing fopen(filename, "r")
+	; if it doesn't exist, return
+	; note we store the file in [rbp - 3]
 	mov		rex, [rbp - 2]
 	mov		rfx, openfile_r
 	push	2
@@ -43,33 +55,41 @@ fuckfiles:
 	ccall	printf
 	jmp		done
 fileExists:
+	; close the file that was opened to check existence
 	mov		rex, [rbp - 3]
 	push	1
 	ccall	fclose
 
+	; [rbp - 3] file
 	mov		rex, [rbp - 2]
 	mov		rfx, openfile_w
 	push	2
 	ccall	fopen
 	mov		[rbp - 3], rax
 
+	; prompt user for a string to write
 	mov		rex, writeprompt
 	push	1
 	ccall	printf
 
+	; [rbp - 4] entered string
 	push	0
 	ccall	getstr
 	mov		[rbp - 4], rax
 
+	; now write that string to the file however
+	; many times specified in loopcount
 loop:
 	gt		[rbp - 1], 0
 	jif		endloop
 
+	; write string to file
 	mov		rex, [rbp - 3]
 	mov		rfx, [rbp - 4]
 	push	2
 	ccall	fputstr	
 
+	; append a newline
 	mov		rex, [rbp - 3]
 	mov		rfx, 10
 	push	2

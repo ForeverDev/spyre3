@@ -11,8 +11,7 @@ MODE ID	| OPERANDS
 5	| [(reg) + (u64)], (f64)
 6	| [(reg) + (u64)], (reg)
 7	| (u64)
-8	| [(reg) + (u64)]
-
+8	| [(reg) + (u64)
 Opcodes
 
 OPCODE	| NAME	| VALID MODES 
@@ -42,7 +41,7 @@ OPCODE	| NAME	| VALID MODES
 33	| LNOT	| 2 3 4 5 6
 40	| PUSH	| 1 7
 41	| POP 	| 0 1
-60	| CALL	| 7	
+60	| CALL	| 7 8	
 61	| CCALL	| 7
 62	| JMP	| 7
 63	| JIF	| 7

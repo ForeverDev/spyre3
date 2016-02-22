@@ -132,9 +132,7 @@ void lexc_readAndTokenize(lexc_state* L, const s8* filename) {
 				c == ':' ? COLON : 
 				UNKNOWN
 			), buf);
-		} else if (c == '-') {
-			next_num_neg = 1;
-		}
+		} 
 		p++;	
 	}
 

@@ -131,6 +131,11 @@ void spy_run(spy_state* S, const u8* code) {
 				memcpy(&a, &code[(u64)S->reg[IP]], sizeof(u64));
 				S->reg[IP] += sizeof(u64);
 				break;
+			case 8:
+				a = code[(u64)S->reg[IP]++];
+				memcpy(&b, &code[(u64)S->reg[IP]], sizeof(u64));
+				S->reg[IP] += sizeof(u64);
+				break;
 		}
 		// now, test opcode again and use a, b and c accordingly
 		switch (opcode) {
@@ -232,7 +237,14 @@ void spy_run(spy_state* S, const u8* code) {
 				break;
 			case 0x60:	// CALL
 				S->mem[(u64)(--S->reg[SP])] = S->reg[IP]; 
-				S->reg[IP] = a;
+				switch (mode) {
+					case 1:
+						S->reg[IP] = S->reg[(u64)a];
+						break;
+					case 2:
+						S->reg[IP] = a;
+						break;
+				}
 				break;
 			case 0x61: { // CCALL 
 				s8 buf[128];

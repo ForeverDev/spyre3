@@ -402,6 +402,13 @@ void compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filen
 							bp += sizeof(f64);
 							break;
 						}
+						case 8: {
+							*bp++ = (u8)compb_getRegister(C, instruction[0]->word);
+							a64 = strtod(instruction[1]->word, NULL);
+							memcpy(bp, &a64, sizeof(f64));
+							bp += sizeof(f64);
+							break;
+						}
 					}
 				}
 				break;

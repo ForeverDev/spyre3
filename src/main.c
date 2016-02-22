@@ -10,22 +10,6 @@
 int main(int argc, char** argv) {
 
 	spy_state* S = spy_newstate();
-	
-	/*	
-	lua_State* L = luaL_newstate();
-	luaL_openlibs(L);
-	
-	if (luaL_dofile(L, "scompile2.lua")) {
-		printf("lua error: %s\n", lua_tostring(L, -1));
-		return 1;
-	}
-	lua_getglobal(L, "scompile2_main");
-	lua_pushstring(L, argv[1]);
-	if (lua_pcall(L, 1, 0, 0)) {
-		printf("lua error: %s\n", lua_tostring(L, -1));
-		return 1;
-	}
-	*/
 	lexb_state* L = lexb_newstate();
 	lexb_readAndTokenize(L, argv[1]);
 
@@ -37,6 +21,8 @@ int main(int argc, char** argv) {
 	newfn[len - 1] = 'b';
 
 	spy_readAndRun(S, newfn);
+	
+	remove(newfn);
 
 	return 0;
 
