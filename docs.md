@@ -20,7 +20,6 @@ OPCODE	| NAME	| VALID MODES
 00	| NULL	| 0
 01	| EXIT	| 0
 02	| RET	| 0
-	|	|
 20	| MOV	| 2 3 4 5 6
 21	| ADD	| 2 3 4 5 6
 22	| SUB	| 2 3 4 5 6
@@ -41,10 +40,8 @@ OPCODE	| NAME	| VALID MODES
 31	| LAND	| 2 3 4 5 6
 32	| LOR	| 2 3 4 5 6
 33	| LNOT	| 2 3 4 5 6
-	|	|
 40	| PUSH	| 1 7
 41	| POP 	| 0 1
-	|	|
 60	| CALL	| 7	
 61	| CCALL	| 7
 62	| JMP	| 7
