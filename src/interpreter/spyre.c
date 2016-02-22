@@ -87,7 +87,6 @@ spy_state* spy_newstate() {
 void spy_run(spy_state* S, const u8* code) {
 	while (1) {
 		u8 opcode = code[(u64)S->reg[IP]++];
-		//printf("op %s 0x%02x\n", compb_opcodenames[opcode], opcode);
 		u8 mode = code[(u64)S->reg[IP]++];
 		f64 a = 0;					
 		f64 b = 0;

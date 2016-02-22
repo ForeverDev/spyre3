@@ -1,9 +1,9 @@
 #ifndef __INFO_H
 #define __INFO_H
 
-#define SIZE_ROM			0x00800		
-#define SIZE_STACK			0x00400
-#define SIZE_MEMORY			0x10000
+#define SIZE_ROM			0x05000		
+#define SIZE_STACK			0x10000
+#define SIZE_MEMORY			0x50000
 
 #define START_ROM			0x00
 #define START_STACK			(START_ROM + SIZE_ROM + SIZE_STACK)
