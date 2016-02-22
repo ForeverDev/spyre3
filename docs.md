@@ -51,10 +51,14 @@ OPCODE	| NAME	| VALID MODES
 63	| JIF	| 7
 64	| JIT	| 7
 
+File <.spyb> headers
+
 BYTES	| DESCRIBES
 --------|----------
 [0, 4)	| starting location of ROM section
 [4, 8)	| starting location of code section
+
+Registers
 
 CODE	| NAME	| PURPOSE
 --------|-------|--------
@@ -72,6 +76,8 @@ CODE	| NAME	| PURPOSE
 0B	| RIX	| general purpose #9, holds function argument #5
 0C	| RJX	| general purpose #10, holds function argument #6
 
+Memory map
+
 SECTION	| START			| FINISH	
 --------|-----------------------|-------
 ROM	| 0			| SIZE\_ROM - 1
@@ -79,9 +85,9 @@ STACK	| SIZE_ROM		| SIZE\_ROM + SIZE\_STACK - 1
 HEAP	| SIZE_ROM + SIZE_STACK	| SIZE\_MEMORY - 1
 
 
-see svm.h for size macros
+Calling convention
 
----------- CALLING CONVENTION ----------
+```
 Arguments should be passed to a function in the following
 registers respectively:
 	RFX
@@ -107,6 +113,7 @@ CALLING C FUNCTIONS:
 	function as an argument.  SpyreVM automatically takes care
 	of the nargs that was pushed onto the stack, you don't need to
 	explicitly take care of it from the C function 
+```
 	
 
 
