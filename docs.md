@@ -13,7 +13,7 @@ instruction format:	<opcode> <mode> <a>? <b>? <c>?
 	8 = [a(reg) + b(u64)]
 
 OPCODE	| NAME	| VALID MODES 
------------------------------
+--------|-------|------------
 00	| NULL	| 0
 01	| EXIT	| 0
 02	| RET	| 0
