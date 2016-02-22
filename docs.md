@@ -1,9 +1,9 @@
 OPCODE FORMATS
 
 
-MODE ID	| FORM
+MODE ID	| OPERANDS
 --------|-----
-0	| <null>
+0	| 
 1	| (reg)
 2	| (reg), (f64)
 3	| (reg), (reg)
@@ -50,34 +50,34 @@ OPCODE	| NAME	| VALID MODES
 64	| JIT	| 7
 
 ---------- BYTECODE FILE HEADERS -------
-BYTES		DESCRIBES
-
-[0, 4)		starting location of ROM section
-[4, 8)		starting location of code section
+BYTES	| DESCRIBES
+--------|----------
+[0, 4)	| starting location of ROM section
+[4, 8)	| starting location of code section
 
 ---------- REGISTERS -------------------
-CODE	NAME	PURPOSE
-
-00	RIP	instruction pointer
-01	RSP	stack pointer
-02	RBP	base pointer
-03	RAX	general purpose #1, holds function return value
-04	RBX	general purpose #2
-05	RCX	general purpose #3
-06	RDX	general purpose #4
-07	REX	general purpose #5, holds function argument #1
-08	RFX	general purpose #6, holds function argument #2
-09	RGX	general purpose #7, holds function argument #3
-0A	RHX	general purpose #8, holds function argument #4
-0B	RIX	general purpose #9, holds function argument #5
-0C	RJX	general purpose #10, holds function argument #6
+CODE	| NAME	| PURPOSE
+--------|-------|--------
+00	| RIP	| instruction pointer
+01	| RSP	| stack pointer
+02	| RBP	| base pointer
+03	| RAX	| general purpose #1, holds function return value
+04	| RBX	| general purpose #2
+05	| RCX	| general purpose #3
+06	| RDX	| general purpose #4
+07	| REX	| general purpose #5, holds function argument #1
+08	| RFX	| general purpose #6, holds function argument #2
+09	| RGX	| general purpose #7, holds function argument #3
+0A	| RHX	| general purpose #8, holds function argument #4
+0B	| RIX	| general purpose #9, holds function argument #5
+0C	| RJX	| general purpose #10, holds function argument #6
 
 ---------- MEMORY LAYOUT ---------------
-SECTION		START			FINISH	
-
-ROM	   	0			SIZE_ROM - 1
-STACK		SIZE_ROM		SIZE_ROM + SIZE_STACK - 1
-HEAP	   	SIZE_ROM + SIZE_STACK	SIZE_MEMORY - 1
+SECTION	| START			| FINISH	
+--------|-----------------------|-------
+ROM	| 0			| SIZE_ROM - 1
+STACK	| SIZE_ROM		| SIZE_ROM + SIZE_STACK - 1
+HEAP	| SIZE_ROM + SIZE_STACK	| SIZE_MEMORY - 1
 
 
 see svm.h for size macros
