@@ -1,32 +1,155 @@
 section data
-let printf				"printf"
+; C functions we will be using
+let printf				"printf"	; void	printf(format, ...);
+let malloc				"malloc"	; ptr	malloc(size);
+
+; ----- constant strings -----
 let DEBUG_IO_INOUT		"input name: %s\noutput name: %s\n"
 
+; file system modes
+let FS_MODE_W			"w"
+let FS_MODE_R			"r"
+let FS_MODE_WB			"wb"
+let FS_MODE_RB			"rb"
+
+; token debug output
+let TOKDEBUG_OUT		"(type '%s' : word '%s')\n"
+; token types
+let TOKTYPE_NUMBER		"NUMBER"
+let TOKTYPE_STRING		"STRING"
+let TOKTYPE_ADD			"ADD"
+let TOKTYPE_SUB			"SUB"
+let TOKTYPE_MUL			"MUL"
+let TOKTYPE_DIV			"DIV"
+
+
+; CODE STARTS HERE
+; some quick notes about the style of the code:
+;	- a method of a 'class' has two underscores (__) before the name
+;	- all 'class' methods take 'this' in as the first parameter
+;	- for organizational purposes, arguments passed to a function are
+;	  loaded onto the stack by the callee	
 section code
 jmp			start
 
+; ARGS
+;	REX: string TOKEN_TYPE
+;	RFX: string TOKEN_WORD
+; RET
+;	returns a pointer to a Token
+;	[RAX - 0] is TOKEN_TYPE
+;	[RAX - 1] is TOKEN_WORD
+__Token_new:
+	push	rbx
+	push	rbp
+	mov		rbp, rsp
+	sub		rsp, 2
+	
+	; this function creates a new token 
+	; a token has two fields
+	; [t - 0] = token typeof
+	; [t - 1] = token word (ALL TOKENS HAVE WORDS, INCLUDING OPERATORS)
+	
+	mov		[rbp - 1], rex 
+	mov		[rbp - 2], rfx
+	
+	; allocate some space for the token (two chunks)
+	mov		rex, 2
+	push	1
+	ccall	malloc
+	
+	; the memory for the token is now stored in RAX
+	; assign to the fields in memory accordingly
+	mov		rbx, [rbp - 1]
+	mov		[rax - 0], rbx
+	mov		rbx, [rbp - 2]
+	mov		[rax - 1], rbx
+	
+	mov		rax, rax
+	mov		rsp, rbp
+	pop		rbp
+	pop		rbx
+	ret
+
+; ARGS
+;	REX: Token* t
+__Token_print:
+	push	rbx
+	push	rbp
+	mov		rbp, rsp
+	sub		rsp, 1
+
+	mov		[rbp - 1], rex
+
+	; print the token information
+	; load the format
+	mov		rex, TOKDEBUG_OUT
+	; load the type
+	mov		rbx, [rbp - 1]
+	mov		rfx, [rbx - 0]
+	; load the word
+	mov		rbx, [rbp - 1]
+	mov		rgx, [rbx - 1]
+	; now print
+	push	3
+	ccall	printf
+
+	mov		rsp, rbp
+	xor		rax, rax
+	pop		rbp
+	pop		rbx
+	ret
+	
 ; ARGUMENTS
 ; REX FILE CONTENTS
-; RFX FILE NAME
-; RGX FILE OUTPUT NAME
+; RFX FILE CONTENTS LENGTH
+; RGX FILE NAME
+; RHX FILE OUTPUT NAME
 start:
 	
 	mov		rbp, rsp	
-	sub		rsp, 3
+	sub		rsp, 7
 
-	; REX in [rbp - 1]
-	; RFX in [rbp - 2]
-	; RGX in [rbp - 3]
+	; FILE CONTENTS				in [rbp - 1]
+	; FILE CONTENTS LENGTH		in [rbp - 2]
+	; FILE NAME					in [rbp - 3]
+	; FILE OUTPUT NAME			in [rbp - 4]
 	mov		[rbp - 1], rex
 	mov		[rbp - 2], rfx
 	mov		[rbp - 3], rgx
+	mov		[rbp - 4], rhx	
 	
-	; print information about the input and output files
+	; print some debugging information
 	mov		rex, DEBUG_IO_INOUT
-	mov		rfx, [rbp - 2]
-	mov		rgx, [rbp - 3]
+	mov		rfx, [rbp - 3]
+	mov		rgx, [rbp - 4]
 	push	3
-	ccall	printf
-		
+	ccall	printf	
+
+	; create some token
+	mov		rex, TOKTYPE_NUMBER
+	mov		rfx, FS_MODE_W
+	call	__Token_new
+
+	; FILE COUNTER		in [rbp - 5]
+	mov		[rbp - 5], 0
+
+; while (FILE_COUNTER < FILE_CONTENTS_LENGTH)
+L00:
+	; FILE_COUNTER < FILE_CONTENTS_LENGTH
+	mov		rbx, [rbp - 5]
+	lt		rbx, [rbp - 2]
+	jif		L01
+
+	; TOKEN_TYPE in [rbp - 6]
+	; TOKEN_WORD in [rbp - 7]
+	mov		[rbp - 6], 0
+	mov		[rbp - 7], 0
+
+	add		[rbp - 5], 1
+	jmp		L00
+L01:
+	
 
 	exit
+

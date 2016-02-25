@@ -118,7 +118,7 @@ u8* lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 			lexb_pushtoken(L, NUMBER, buf);
 		// handle identifiers / keywords / registers
 		} else if (isalnum(c) || c == '_') {
-			while (isalnum((c = *p++)) || c == '_') {
+			while (isalnum((c = *p++)) || isdigit(c) || c == '_') {
 				*bp++ = c;
 			}
 			p -= 2;

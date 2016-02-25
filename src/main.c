@@ -26,7 +26,7 @@ int main(int argc, char** argv) {
 	
 	memset(output_name, 0, sizeof(output_name));
 	strcpy(output_name, argv[1]);
-	output_name[strlen(output_name) - 1] = 'b';
+	output_name[strlen(output_name)] = 's';
 
 	fseek(src, 0, SEEK_END);
 	flen = ftell(src);
@@ -47,8 +47,9 @@ int main(int argc, char** argv) {
 			RHX = file output name;
 	*/
 	spy_setregister(S, "REX", (f64)fcontents);
-	spy_setregister(S, "RFX", (f64)fname);
-	spy_setregister(S, "RGX", (f64)foutput);
+	spy_setregister(S, "RFX", (f64)flen);
+	spy_setregister(S, "RGX", (f64)fname);
+	spy_setregister(S, "RHX", (f64)foutput);
 	spy_run(S, code);
 	
 	return 0;
