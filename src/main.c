@@ -4,7 +4,8 @@
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
-#include "interpreter/slex-byte.h"
+#include "interpreter/assembler-lex.h"
+#include "interpreter/assembler.h"
 #include "interpreter/spyre.h"
 
 int main(int argc, char** argv) {

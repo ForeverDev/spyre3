@@ -1,7 +1,7 @@
 CC = gcc
 CF = -std=c11
 LIBS = -llua -ldl -lm
-DEPS = build/main.o build/slex-byte.o build/scompile-byte.o build/slib.o build/sapi.o build/spyre.o build/slex.o
+DEPS = build/main.o build/assembler-lex.o build/assembler.o build/lib.o build/api.o build/spyre.o 
 BUILD = build
 VPATH = src
 
@@ -18,20 +18,17 @@ build/spy3: build $(DEPS)
 build/main.o: src/main.c
 	$(CC) $(CF) -c src/main.c -o build/main.o
 
-build/slex-byte.o: src/interpreter/slex-byte.c
-	$(CC) $(CF) -c src/interpreter/slex-byte.c -o build/slex-byte.o
+build/assembler-lex.o: src/interpreter/assembler-lex.c
+	$(CC) $(CF) -c src/interpreter/assembler-lex.c -o build/assembler-lex.o
 
-build/scompile-byte.o: src/interpreter/scompile-byte.c
-	$(CC) $(CF) -c src/interpreter/scompile-byte.c -o build/scompile-byte.o
+build/assembler.o: src/interpreter/assembler.c
+	$(CC) $(CF) -c src/interpreter/assembler.c -o build/assembler.o
 
-build/slib.o: src/interpreter/slib.c
-	$(CC) $(CF) -c src/interpreter/slib.c -o build/slib.o
+build/lib.o: src/interpreter/lib.c
+	$(CC) $(CF) -c src/interpreter/lib.c -o build/lib.o
 
-build/sapi.o: src/interpreter/sapi.c
-	$(CC) $(CF) -c src/interpreter/sapi.c -o build/sapi.o
+build/api.o: src/interpreter/api.c
+	$(CC) $(CF) -c src/interpreter/api.c -o build/api.o
 	
 build/spyre.o: src/interpreter/spyre.c
 	$(CC) $(CF) -c src/interpreter/spyre.c -o build/spyre.o
-
-build/slex.o: src/compiler/slex.c
-	$(CC) $(CF) -c src/compiler/slex.c -o build/slex.o

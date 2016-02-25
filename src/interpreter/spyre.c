@@ -2,10 +2,10 @@
 #include <stdio.h>
 #include <string.h>
 #include <stdarg.h>
-#include "sapi.h"
-#include "slib.h"
+#include "api.h"
+#include "lib.h"
 #include "spyre.h"
-#include "scompile-byte.h"
+#include "assembler.h"
 
 spy_state* spy_newstate() {
 	spy_state* S = malloc(sizeof(spy_state));
