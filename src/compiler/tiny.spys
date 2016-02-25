@@ -1,0 +1,32 @@
+section data
+let printf				"printf"
+let DEBUG_IO_INOUT		"input name: %s\noutput name: %s\n"
+
+section code
+jmp			start
+
+; ARGUMENTS
+; REX FILE CONTENTS
+; RFX FILE NAME
+; RGX FILE OUTPUT NAME
+start:
+	
+	mov		rbp, rsp	
+	sub		rsp, 3
+
+	; REX in [rbp - 1]
+	; RFX in [rbp - 2]
+	; RGX in [rbp - 3]
+	mov		[rbp - 1], rex
+	mov		[rbp - 2], rfx
+	mov		[rbp - 3], rgx
+	
+	; print information about the input and output files
+	mov		rex, DEBUG_IO_INOUT
+	mov		rfx, [rbp - 2]
+	mov		rgx, [rbp - 3]
+	push	3
+	ccall	printf
+		
+
+	exit
