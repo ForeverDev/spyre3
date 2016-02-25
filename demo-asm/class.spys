@@ -1,0 +1,71 @@
+; this demo shows a simple example of how classes might work
+; we create an instance of a class and we call one of its methods
+; note that method names start with `__`
+
+; here is the class we will be working with:
+
+; class Object {
+; 	real 	field_one;
+;	string	field_two;
+;	void 	printFields() {
+;		printf("%f %s\n", field_one, field_two);
+;	}
+; };
+
+section data
+let str1	"HELLO"
+let str2	"GOODBYE"
+let format	"%d %s\n"
+let printf	"printf"
+
+section code
+jmp start
+
+; field_one is at [rex]
+; field_two is at [rex - 1]
+__Object_printFields:
+	push	rbp
+	mov		rbp, rsp
+	sub		rsp, 2
+
+	mov		rax, [rex - 0]
+	mov		[rbp - 1], rax
+	mov		rax, [rex - 1]
+	mov		[rbp - 2], rax
+	
+	mov		rex, format
+	mov		rfx, [rbp - 1]
+	mov		rgx, [rbp - 2]
+	ccall	printf
+
+	mov		rsp, rbp
+	pop		rbp
+	ret
+	
+; note that rpb is guarenteed to be equal to rsp on entry
+; so there is no need to set them accordingly
+start:
+	; make space for two Object instances
+	sub		rsp, 4
+
+	; a = Object(10.5, "HELLO");
+	mov		[rbp - 1], 10.5
+	mov		[rbp - 2], str1
+
+	; b = Object(69.42, "GOODBYE");
+	mov		[rbp - 3], 69.42
+	mov		[rbp - 4], str2
+	
+	; a.printFields();
+	mov		rex, rbp
+	sub		rex, 1
+	call	__Object_printFields
+
+	; b.printFields();
+	mov		rex, rbp
+	sub		rex, 3
+	call	__Object_printFields
+
+	exit
+
+
