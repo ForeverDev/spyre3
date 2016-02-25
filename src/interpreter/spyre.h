@@ -30,9 +30,9 @@ typedef struct spy_state {
 } spy_state;
 
 spy_state*		spy_newstate();
-void			spy_readAndRun(spy_state*, const s8*);
+const u8*		spy_prepare(spy_state*, const u8*);
 static void		spy_runtimeError(spy_state*, const s8*, ...);
-static void		spy_run(spy_state*, const u8*);
+void			spy_run(spy_state*, const u8*);
 static void		spy_debug(spy_state*);
 
 #endif

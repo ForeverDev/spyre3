@@ -50,6 +50,6 @@ typedef struct lexb_state {
 lexb_state*	lexb_newstate();
 static void lexb_pushtoken(lexb_state*, lexb_token_type, const s8*);
 void 		lexb_report(const s8*, ...);
-void		lexb_readAndTokenize(lexb_state*, const s8*);
+u8*			lexb_readAndTokenize(lexb_state*, const s8*);
 
 #endif

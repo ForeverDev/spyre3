@@ -3,7 +3,6 @@ CF = -std=c11
 LIBS = -llua -ldl -lm
 DEPS = build/main.o build/assembler-lex.o build/assembler.o build/lib.o build/api.o build/spyre.o 
 BUILD = build
-VPATH = src
 
 all: build/spy3
 
@@ -11,8 +10,9 @@ build:
 	mkdir build
 
 build/spy3: build $(DEPS)
-	sudo $(CC) $(CF) $(DEPS) -o spy3
-	sudo mv spy3 /usr/local/bin
+	sudo $(CC) $(CF) $(DEPS) $(LIBS) -o spy
+	sudo mv spy /usr/local/bin
+	sudo cp -Rf src/compiler/tiny.spys /usr/local/include/spyre/tiny.spys
 	rm -Rf build/*
 
 build/main.o: src/main.c

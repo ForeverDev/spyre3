@@ -54,7 +54,6 @@ const s8* compb_opcodenames[0xff] = {
 compb_state* compb_newstate() {
 
 	compb_state* C = malloc(sizeof(compb_state));
-	C->handle = NULL;
 
 	memset(C->rom, 0, sizeof(C->rom));
 	C->romp = C->rom;
@@ -106,7 +105,7 @@ s32 compb_getLabel(compb_state* C, const s8* identifier) {
 s32 compb_getOpcode(compb_state* C, const s8* identifier) {
 	for (u32 i = 0; i < 0xff; i++) {
 		// check if i is a valid opcode
-		if ((i >= 0x00 && i <= 0x02) ||
+		if ((			  i <= 0x02) ||
 			(i >= 0x20 && i <= 0x33) ||
 			(i >= 0x40 && i <= 0x41) ||
 			(i >= 0x60 && i <= 0x64)) {
@@ -182,23 +181,8 @@ void compb_strupper(compb_state* C, s8* str) {
 	}
 }
 
-void compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filename) {
+u8* compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filename) {
 
-	// the filename passed to us has the form *.spys
-	// we want to write to *.spyb, so replace the
-	// last character with 'b'
-	s8 writefile[1024];
-	strcpy(writefile, filename);
-	writefile[strlen(writefile) - 1] = 'b';
-
-	C->handle = fopen(writefile, "w");
-	if (!C->handle) {
-		// we can just report the error using
-		// the lexer's function because it doesn't
-		// take a lex state as a parameter
-		lexb_report("Couldn't write to file '%s'. (abort)", writefile);
-	}
-	
 	// this is the first token in the sequence of tokens
 	lexb_token* t = token_head;
 
@@ -290,6 +274,9 @@ void compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filen
 					break;
 				case NUMBER:
 					ip += 8;
+					break;
+				// to silence the annoying compiler warning
+				default:
 					break;
 			}
 		}	
@@ -419,12 +406,15 @@ void compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filen
 		}
 		t = t->next;
 	}
-
-	fwrite((u8*)&data_start, sizeof(data_start), 1, C->handle);
-	fwrite((u8*)&code_start, sizeof(code_start), 1, C->handle);
-	fwrite(bytecode, bp - bytecode, 1, C->handle);
+	
+	u8* final = malloc(sizeof(bytecode) + sizeof(data_start) + sizeof(code_start) + 1);
+	memset(&final[0], 0, sizeof(final));
+	memcpy(&final[0], &data_start, sizeof(data_start));
+	memcpy(&final[4], &code_start, sizeof(code_start));
+	memcpy(&final[8], bytecode, bp - bytecode);
 
 	free(bytecode);
-	fclose(C->handle);
+
+	return final;
 
 }

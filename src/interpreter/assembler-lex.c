@@ -59,7 +59,7 @@ void lexb_dump(lexb_state* L) {
 
 }
 
-void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
+u8* lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 
 	// validate that the file exists and open it
 
@@ -147,7 +147,7 @@ void lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 	// to the bytecode compiler
 	compb_state* C = compb_newstate();
 	
-	compb_compileTokens(C, L->head, filename);
+	return compb_compileTokens(C, L->head, filename);
 
 }
 

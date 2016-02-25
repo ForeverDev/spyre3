@@ -60,8 +60,6 @@ typedef struct compb_label {
 
 typedef struct compb_state {
 	
-	FILE*			handle;
-
 	s8				rom[SIZE_ROM];
 	s8*				romp;
 
@@ -84,6 +82,6 @@ s32				compb_getOpcode(compb_state*, const s8*);
 s32				compb_getInstructionMode(compb_state*, lexb_token**, u32);
 
 void			compb_strupper(compb_state*, s8*);
-void			compb_compileTokens(compb_state*, lexb_token*, const s8*);
+u8*				compb_compileTokens(compb_state*, lexb_token*, const s8*);
 
 #endif

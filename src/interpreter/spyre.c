@@ -284,15 +284,7 @@ void spy_run(spy_state* S, const u8* code) {
 	}
 }
 
-void spy_readAndRun(spy_state* S, const s8* filename) {
-	FILE* f = fopen(filename, "rb");
-	fseek(f, 0, SEEK_END);
-	u64 len = ftell(f);
-	fseek(f, 0, SEEK_SET);
-	u8* contents = malloc(len + 1);
-	fread(contents, len, 1, f);
-	contents[len] = 0;
-
+const u8* spy_prepare(spy_state* S, const u8* contents) {
 	u32 datastart;
 	u32 codestart;
 
@@ -307,9 +299,9 @@ void spy_readAndRun(spy_state* S, const s8* filename) {
 		S->mem[i] = (f64)contents[(u64)datastart + i];
 	}
 
-	spyL_loadlibs(S);	
-	spy_run(S, &contents[(u64)codestart]);
-	//spy_debug(S);
+	spyL_loadlibs(S);
+
+	return &contents[(u64)codestart];
 }
 
 void spy_runtimeError(spy_state* S, const s8* format, ...) {
