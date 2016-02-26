@@ -12,6 +12,7 @@ build:
 build/spy3: build $(DEPS)
 	sudo $(CC) $(CF) $(DEPS) $(LIBS) -o spy
 	sudo mv spy /usr/local/bin
+	mkdir -p /usr/local/include/spyre
 	sudo cp -Rf src/compiler/tiny.spys /usr/local/include/spyre/tiny.spys
 	rm -Rf build/*
 

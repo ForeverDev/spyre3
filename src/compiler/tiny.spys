@@ -128,6 +128,8 @@ __Token_print:
 	pop		rbx
 	ret
 
+; ARGS
+;	REX: number 
 isalpha:
 	push	rbp
 	mov		rbp, rsp
@@ -144,6 +146,58 @@ C01:
 	mov		rsp, rbp
 	pop		rbp
 	ret
+
+; ARGS
+;	REX: number
+isdigit:
+	push	rbp
+	mov		rbp, rsp
+
+	ge		rex, 48
+	jif		D00
+	le		rex, 57
+	jif		D00
+	mov		rax, 1
+	jmp		D01
+D00:
+	mov		rax, 0
+D01:
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+; ARGS
+;	REX: token array pointer
+;	RFX: size of token array
+printAllTokens:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 3
+
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], rfx
+	mov		[rbp + 3], 0
+	
+E00:
+	lt		[rbp + 3], [rbp + 2]
+	jif		E01
+	
+	; get a pointer to the current token in rax
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 3]
+
+	; now print
+	mov		rex, [rax + 0]
+	call	__Token_print
+	
+	add		[rbp + 3], 1
+
+	jmp		E00
+E01:
+
+	mov		rsp, rbp
+	pop		rbp
+	ret
 	
 ; ARGUMENTS
 ; REX FILE CONTENTS
@@ -153,7 +207,7 @@ C01:
 start:
 	
 	mov		rbp, rsp	
-	add		rsp, 563
+	add		rsp, 2048
 	; STACK MAP
 	; FILE CONTENTS				in [rbp + 1]
 	; FILE CONTENTS LENGTH		in [rbp + 2]
@@ -162,7 +216,9 @@ start:
 	; FILE COUNTER				in [rbp + 5]
 	; LOCAL CURRENT_CHAR		in [rbp + 6]
 	; GENERAL PURPOSE NUMBS		in [rbp + [6, 50]]
-	; GENERAL PURPOSE BUFFER	in [rbp + 51] (of size 512)
+	; GENERAL PURPOSE BUFFER	in [rbp + 51]  (of size 512)
+	; TOKEN ARRAY POINTER		in [rbp + 562]
+	; TOKEN ARRAY				in [rbp + 563] (of size 1024)
 
 	; FILE CONTENTS				in [rbp + 1]
 	; FILE CONTENTS LENGTH		in [rbp + 2]
@@ -172,6 +228,7 @@ start:
 	mov		[rbp + 2], rfx
 	mov		[rbp + 3], rgx
 	mov		[rbp + 4], rhx	
+	mov		[rbp + 562], 0
 	
 	; print some debugging information
 	mov		rex, DEBUG_IO_INOUT
@@ -184,11 +241,11 @@ start:
 	mov		[rbp + 5], 0
 
 ; while (FILE_COUNTER < FILE_CONTENTS_LENGTH)
-D00:
+L00:
 	; FILE_COUNTER < FILE_CONTENTS_LENGTH
 	mov		rbx, [rbp + 5]
 	lt		rbx, [rbp + 2]
-	jif		D01
+	jif		L01
 	
 	; load the current character into [rbp + 6]
 	mov		rbx, [rbp + 1]			; [rbp + 1] is file contents pointer
@@ -196,23 +253,23 @@ D00:
 	mov		[rbp + 6], [rbx + 0]	; [rbp + 6] now contains the current character
 
 	cmp		[rbp + 6], 32	; skip if is whitespace
-	jit		D08
+	jit		L08
 	cmp		[rbp + 6], 10	; skip if is newline
-	jit		D08
+	jit		L08
 	cmp		[rbp + 6], 9	; skip if is tab
-	jit		D08
+	jit		L08
 
 	; here is the start of the branching process
 	; this is where we handle the difference between
 	; an identifier, a string, a number, etc
 	;	LABEL NOTES
-	;		end of branch is D02
+	;		end of branch is L02
 	;		
 	; (c >= 'a' && c <= 'z');
 	mov		rex, [rbp + 6]
 	call	isalpha
 	cmp		rax, 1
-	jif		D07
+	jif		L09
 	; decided true
 	; note that there is a general purpose buffer located at [rbp + 51]
 	; we will use that buffer to store the identifier
@@ -221,7 +278,7 @@ D00:
 	; the pointer to the top of the buffer at [rbp + 51]
 	; also note we start with 1 because we already wrote the first character above
 	mov		[rbp + 7], 1
-D05: ; START IDENTIFIER LOOP
+L05: ; START IDENTIFIER LOOP
 	add		[rbp + 5], 1			; increase FILE_COUNTER by one
 	mov		rax, [rbp + 1]			; load file pointer into rax
 	add		rax, [rbp + 5]			; load current character pointer into rax
@@ -229,7 +286,7 @@ D05: ; START IDENTIFIER LOOP
 	mov		rex, [rbp + 6]
 	call	isalpha
 	cmp		rax, 1
-	jif		D06
+	jif		L06
 
 	; we've made sure the character is alpha, now append it to the buffer
 	mov		rax, rbp
@@ -239,8 +296,8 @@ D05: ; START IDENTIFIER LOOP
 
 	add		[rbp + 7], 1 ; increase the buffer pointer
 
-	jmp		D05
-D06: ; END IDENTIFIER LOOP
+	jmp		L05
+L06: ; END IDENTIFIER LOOP
 	; decrease FILE_COUNTER by 1
 	sub		[rbp + 5], 1
 	; null terminate the buffer
@@ -253,29 +310,99 @@ D06: ; END IDENTIFIER LOOP
 	mov		rfx, rbp
 	add		rfx, 51
 	call	__Token_new
-	mov		rex, rax
-	call	__Token_print
-	jmp		D02
+	mov		[rbp + 8], rax
+	jmp		L02
 
-D07: ; ELSE IF IS OPERATOR
+L09: ; ELSE IF IS NUMBER
+	; go to next if statement if its not a digit
+	mov		rex, [rbp + 6]
+	call	isdigit
+	cmp		rax, 1
+	jif		L07
+
+	; now we know it's a digit, proceed
+	mov		[rbp + 51], [rbp + 6]	; move the first digit into the buffer
+	
+	; now, like before, we use the general purpose local [rbp + 7] to
+	; store the pointer to the top of the buffer
+	; we set its initial value to 1 because we already pushed the first number
+	mov		[rbp + 7], 1
+L10: ; START NUMBER LOOP
+	; load the next character into [rbp + 6]
+	add		[rbp + 5], 1			; increase file pointer by one
+	mov		rax, [rbp + 1]			; load file pointer into rax
+	add		rax, [rbp + 5]			; load current character pointer into rax
+	mov		[rbp + 6], [rax + 0]	; [rbp + 6] now contains current character
+
+	; now check again if it's a digit
+	mov		rex, [rbp + 6]
+	call	isdigit
+	cmp		rax, 1
+	jif		L11
+	
+	; now we've made sure the next character is a digit, we can now append it to the buffer
+	mov		rax, rbp
+	add		rax, 51
+	add		rax, [rbp + 7]
+	mov		[rax + 0], [rbp + 6]
+	
+	; increase the buffer pointer
+	add		[rbp + 7], 1	
+
+	; do loop again
+	jmp		L10
+
+L11: ; END NUMBER LOOP
+	; decrease FILE_COUNTER by 1
+	sub		[rbp + 5], 1
+	; null terminate the buffer
+	mov		rax, rbp
+	add		rax, 51
+	add		rax, [rbp + 7]
+	mov		[rax + 0], 0
+
+	; create a new token
+	mov		rex, 3
+	mov		rfx, rbp
+	add		rfx, 51
+	call	__Token_new
+	mov		[rbp + 8], rax
+
+	; jump to the end of the if statement
+	jmp		L02
+
+
+L07: ; ELSE IF IS OPERATOR
 	mov		[rbp + 51], [rbp + 6]
 	mov		[rbp + 52], 0
 	mov		rex, 2
 	mov		rfx, rbp
 	add		rfx, 51
 	call	__Token_new
-	mov		rex, rax
-	call	__Token_print
-	jmp		D02
+	mov		[rbp + 8], rax
+	jmp		L02
 
-D08: ; JUMP TO HERE TO IGNORE
-	
-D02: ; LEX LOOP INCREMENT FILE_COUNTER
+L02: ; LEX LOOP INCREMENT FILE_COUNTER
 
+	; the token we created is in [rbp + 8]
+	; append it to the token array
+	mov		rax, rbp
+	add		rax, 563
+	add		rax, [rbp + 562]
+	mov		[rax + 0], [rbp + 8]
+	; now increase the token pointer
+	add		[rbp + 562], 1
+
+L08: ; JUMP HERE TO SKIP
 	add		[rbp + 5], 1
-	jmp		D00
-D01: ; END LEX LOOP
+	jmp		L00
+L01: ; END LEX LOOP
 	
+	; print tokens for debugging
+	mov		rex, rbp
+	add		rex, 563
+	mov		rfx, [rbp + 562]		
+	call	printAllTokens
 
 	exit
 
