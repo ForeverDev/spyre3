@@ -94,6 +94,7 @@ u8* lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 			lexb_pushtoken(L, NEWLINE, "");
 		} else if (c == ';') {
 			while ((c = *++p) != '\n');
+			lexb_pushtoken(L, NEWLINE, "");
 		// handle strings
 		} else if (c == '"') {
 			while ((c = *++p) != '"') {

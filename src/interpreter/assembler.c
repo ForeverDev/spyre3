@@ -167,9 +167,11 @@ s32 compb_getInstructionMode(compb_state* C, lexb_token** instruction, u32 nargs
 			)
 		return 7;
 	else if (
-				(nargs == 2) &&
+				(nargs == 4) &&
 				(compb_getRegister(C, instruction[0]->word) > -1) &&
-				(instruction[1]->type == NUMBER)
+				(instruction[1]->type == NUMBER) &&
+				(compb_getRegister(C, instruction[2]->word) > -1) &&
+				(instruction[3]->type == NUMBER)
 			)
 		return 8;
 		return -1;
@@ -392,6 +394,10 @@ u8* compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filena
 						case 8: {
 							*bp++ = (u8)compb_getRegister(C, instruction[0]->word);
 							a64 = strtod(instruction[1]->word, NULL);
+							memcpy(bp, &a64, sizeof(f64));
+							bp += sizeof(f64);
+							*bp++ = (u8)compb_getRegister(C, instruction[2]->word);
+							a64 = strtod(instruction[3]->word, NULL);
 							memcpy(bp, &a64, sizeof(f64));
 							bp += sizeof(f64);
 							break;

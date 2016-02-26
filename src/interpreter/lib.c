@@ -17,6 +17,7 @@ void spyL_loadlibs(spy_state* S) {
 	spy_pushcfunction(S, "fputnum", spyL_io_fputnum);
 
 	spy_pushcfunction(S, "strlen", spyL_str_strlen);
+	spy_pushcfunction(S, "strcpy", spyL_str_strcpy);
 
 	spy_pushcfunction(S, "malloc", spyL_mem_malloc);
 	spy_pushcfunction(S, "free", spyL_mem_free);
@@ -145,17 +146,31 @@ void spyL_str_strlen(spy_state* S, u8 nargs) {
 	spy_setregister(S, "RAX", len);
 }
 
+void spyL_str_strcpy(spy_state* S, u8 nargs) {
+	u64 dest = (u64)spy_getregister(S, "REX");
+	u64 src = (u64)spy_getregister(S, "RFX");
+	// get strlen of source
+	spy_setregister(S, "REX", (f64)src);
+	spyL_str_strlen(S, 1);
+	u64 len = (u64)spy_getregister(S, "RAX");
+	for (u64 i = 0; i < len; i++) {
+		spy_setmem(S, dest + i, spy_getmem(S, src + i));
+	}
+	spy_setmem(S, dest + len, 0);
+	spy_setregister(S, "RAX", 0);
+}
+
 // MEMORY MANAGEMENT LIBRARY
 
 // void* malloc(size);
 void spyL_mem_malloc(spy_state* S, u8 nargs) {
-	u32 head = START_MEMORY;
+	u64 head = START_MEMORY;
 	f64 mem;
 	while ((mem = spy_getmem(S, head))) {
 		head += mem;
 	}
 	spy_setmem(S, head, spy_getregister(S, "REX"));
-	spy_setregister(S, "RAX", head);
+	spy_setregister(S, "RAX", head + 1);
 }
 
 // void free(ptr);

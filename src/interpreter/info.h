@@ -6,8 +6,8 @@
 #define SIZE_MEMORY			0x50000
 
 #define START_ROM			0x00
-#define START_STACK			(START_ROM + SIZE_ROM + SIZE_STACK)
-#define START_MEMORY		(START_STACK + 1)
+#define START_STACK			(START_ROM + SIZE_ROM)
+#define START_MEMORY		(START_STACK + SIZE_STACK + 1)
 
 typedef unsigned char		u8;
 typedef unsigned short		u16;

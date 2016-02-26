@@ -18,17 +18,16 @@ void spy_pushcfunction(spy_state* S, const s8* name, void (*f)(spy_state*, u8)) 
 }
 
 u64 spy_pushstring(spy_state* S, const s8* str) {
-	while (*++str);
-	str--;
-	spy_pushchar(S, 0);
+	u64 start = (u64)spy_getregister(S, "RSP");
 	while (*str) {
-		spy_pushchar(S, *str--);
+		spy_pushchar(S, *str++);
 	}
-	return (u64)spy_getregister(S, "RSP");
+	spy_pushchar(S, 0);
+	return start;
 }
 
 void spy_pushchar(spy_state* S, s8 c) {
-	S->mem[(u64)--S->reg[SP]] = c;
+	S->mem[(u64)S->reg[SP]++] = c;
 }
 
 void spy_setmem(spy_state* S, u64 addr, f64 val) {
@@ -74,7 +73,7 @@ const s8* spy_getarg(spy_state* S, u8 argn) {
 }
 
 f64 spy_gettop(spy_state* S) {
-	return S->mem[(u64)S->reg[SP]++];
+	return S->mem[(u64)S->reg[SP]--];
 }
 
 s8* spy_getstr(spy_state* S, const s8* regname, s8* buf) {

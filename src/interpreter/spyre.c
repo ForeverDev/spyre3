@@ -7,6 +7,8 @@
 #include "spyre.h"
 #include "assembler.h"
 
+// TODO FIX MEMORY CORRUPTION IN ROM
+
 spy_state* spy_newstate() {
 	spy_state* S = malloc(sizeof(spy_state));
 	
@@ -37,6 +39,8 @@ spy_state* spy_newstate() {
 		case 6:															\
 			S->mem[(u64)S->reg[(u64)a] + (u64)b] op S->reg[(u64)c];		\
 			break;														\
+		case 8:															\
+			S->mem[(u64)S->reg[(u64)a] + (u64)b] op S->mem[(u64)S->reg[(u64)c] + (u64)d]; \
 	}
 
 #define BIT(op)																											\
@@ -56,31 +60,37 @@ spy_state* spy_newstate() {
 		case 6:																											\
 			S->mem[(u64)S->reg[(u64)a] + (u64)b] = (u64)S->mem[(u64)S->reg[(u64)a] + (u64)b] op (u64)S->reg[(u64)c];	\
 			break;																										\
+		case 8:																											\
+			S->mem[(u64)S->reg[(u64)a] + (u64)b] = (u64)S->mem[(u64)S->reg[(u64)a] + (u64)b] op (u64)S->mem[(u64)S->reg[(u64)c] + (u64)d]; \
+			break;																										\
 	}
 
-#define COMPARE(op)	{																\
-	u8 istrue;																		\
-	switch (mode) {																	\
-		case 2:																		\
-			istrue = S->reg[(u64)a] op b;											\
-			break;																	\
-		case 3:																		\
-			istrue = S->reg[(u64)a] op S->reg[(u64)b];								\
-			break;																	\
-		case 4:																		\
-			istrue = S->reg[(u64)a] op S->mem[(u64)S->reg[(u64)b] + (u64)c];		\
-			break;																	\
-		case 5:																		\
-			istrue = S->mem[(u64)S->reg[(u64)a] + (u64)b] op c;						\
-			break;																	\
-		case 6:																		\
-			istrue = S->mem[(u64)S->reg[(u64)a] + (u64)b] op S->reg[(u64)c];		\
-	}																				\
-	if (istrue) {																	\
-		S->flags |= FLAG_CMP;														\
-	} else {																		\
-		S->flags &= ~FLAG_CMP;														\
-	}																				\
+#define COMPARE(op)	{																									\
+	u8 istrue;																											\
+	switch (mode) {																										\
+		case 2:																											\
+			istrue = S->reg[(u64)a] op b;																				\
+			break;																										\
+		case 3:																											\
+			istrue = S->reg[(u64)a] op S->reg[(u64)b];																	\
+			break;																										\
+		case 4:																											\
+			istrue = S->reg[(u64)a] op S->mem[(u64)S->reg[(u64)b] + (u64)c];											\
+			break;																										\
+		case 5:																											\
+			istrue = S->mem[(u64)S->reg[(u64)a] + (u64)b] op c;															\
+			break;																										\
+		case 6:																											\
+			istrue = S->mem[(u64)S->reg[(u64)a] + (u64)b] op S->reg[(u64)c];											\
+			break;																										\
+		case 8:																											\
+			istrue = S->mem[(u64)S->reg[(u64)a] + (u64)b] op S->mem[(u64)S->reg[(u64)c] + (u64)d];						\
+	}																													\
+	if (istrue) {																										\
+		S->flags |= FLAG_CMP;																							\
+	} else {																											\
+		S->flags &= ~FLAG_CMP;																							\
+	}																													\
 }
 			
 
@@ -91,6 +101,7 @@ void spy_run(spy_state* S, const u8* code) {
 		f64 a = 0;					
 		f64 b = 0;
 		f64 c = 0;
+		f64 d = 0;
 		// first, assign (a, b, c) correctly based on the mode
 		switch (mode) {
 			case 0:
@@ -134,6 +145,9 @@ void spy_run(spy_state* S, const u8* code) {
 				a = code[(u64)S->reg[IP]++];
 				memcpy(&b, &code[(u64)S->reg[IP]], sizeof(u64));
 				S->reg[IP] += sizeof(u64);
+				c = code[(u64)S->reg[IP]++];
+				memcpy(&d, &code[(u64)S->reg[IP]], sizeof(u64));
+				S->reg[IP] += sizeof(u64);
 				break;
 		}
 		// now, test opcode again and use a, b and c accordingly
@@ -143,7 +157,7 @@ void spy_run(spy_state* S, const u8* code) {
 			case 0x01:	// EXIT
 				return;
 			case 0x02:	// RET
-				S->reg[IP] = S->mem[(u64)S->reg[SP]++];
+				S->reg[IP] = S->mem[(u64)S->reg[SP]--];
 				break;
 			case 0x20: 	// MOV
 				ARITH(=);
@@ -211,31 +225,44 @@ void spy_run(spy_state* S, const u8* code) {
 				COMPARE(==);
 				break;
 			case 0x31:	// LAND
+				switch (mode) {
+					case 2:
+						S->reg[(u64)a] = S->reg[(u64)a] && b;
+						break;
+					case 3:
+						S->reg[(u64)a] = S->reg[(u64)a] && S->reg[(u64)b];
+						break;
+					case 4:
+						S->reg[(u64)a] = S->reg[(u64)a] && S->mem[(u64)S->reg[(u64)b] + (u64)c];
+						break;
+				}
+				break;
+					
 			case 0x32:	// LOR
 			case 0x33:	// LNOT
 				break;
 			case 0x40: 	// PUSH
 				switch (mode) {
 					case 1:
-						S->mem[(u64)(--S->reg[SP])] = S->reg[(u64)a];
+						S->mem[(u64)(++S->reg[SP])] = S->reg[(u64)a];
 						break;
 					case 7:
-						S->mem[(u64)(--S->reg[SP])] = a;
+						S->mem[(u64)(++S->reg[SP])] = a;
 						break;
 				}
 				break;
 			case 0x41:	// POP
 				switch (mode) {
 					case 0:
-						S->reg[SP]++;
+						S->reg[SP]--;
 						break;
 					case 1:
-						S->reg[(u64)a] = S->mem[(u64)S->reg[SP]++];
+						S->reg[(u64)a] = S->mem[(u64)S->reg[SP]--];
 						break;
 				}
 				break;
 			case 0x60:	// CALL
-				S->mem[(u64)(--S->reg[SP])] = S->reg[IP]; 
+				S->mem[(u64)(++S->reg[SP])] = S->reg[IP]; 
 				switch (mode) {
 					case 1:
 						S->reg[IP] = S->reg[(u64)a];
@@ -249,7 +276,7 @@ void spy_run(spy_state* S, const u8* code) {
 				s8 buf[128];
 				s8* bp = buf;
 				u8 foundfunc = 0;
-				u8 nargs = (u8)S->mem[(u64)S->reg[SP]++];
+				u8 nargs = (u8)S->mem[(u64)S->reg[SP]--];
 				while (S->mem[(u64)a]) {
 					*bp++ = S->mem[(u64)a++];
 				}

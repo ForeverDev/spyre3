@@ -11,7 +11,7 @@ MODE ID	| OPERANDS
 5	| [(reg) + (u64)], (f64)
 6	| [(reg) + (u64)], (reg)
 7	| (u64)
-8	| [(reg) + (u64)
+8	| [(reg) + (u64)], [(reg) + (u64)]
 Opcodes
 
 OPCODE	| NAME	| VALID MODES 
@@ -19,29 +19,29 @@ OPCODE	| NAME	| VALID MODES
 00	| NULL	| 0
 01	| EXIT	| 0
 02	| RET	| 0
-20	| MOV	| 2 3 4 5 6
-21	| ADD	| 2 3 4 5 6
-22	| SUB	| 2 3 4 5 6
-23	| MUL	| 2 3 4 5 6
-24	| DIV	| 2 3 4 5 6
-25	| NEG	| 1 8	
-26	| OR	| 2 3 4 5 6
-27	| AND 	| 2 3 4 5 6
-28	| XOR	| 2 3 4 5 6
-29	| NOT	| 1 8	
-2A	| SHL	| 2 3 4 5 6
-2B	| SHR	| 2 3 4 5 6
-2C	| LT	| 2 3 4 5 6
-2D	| LE	| 2 3 4 5 6
-2E	| GT	| 2 3 4 5 6
-2F	| GE	| 2 3 4 5 6
-30	| CMP	| 2 3 4 5 6
-31	| LAND	| 2 3 4 5 6
-32	| LOR	| 2 3 4 5 6
-33	| LNOT	| 2 3 4 5 6
+20	| MOV	| 2 3 4 5 6 8
+21	| ADD	| 2 3 4 5 6 8
+22	| SUB	| 2 3 4 5 6 8
+23	| MUL	| 2 3 4 5 6 8
+24	| DIV	| 2 3 4 5 6 8
+25	| NEG	| 1 
+26	| OR	| 2 3 4 5 6 8
+27	| AND 	| 2 3 4 5 6 8
+28	| XOR	| 2 3 4 5 6 8
+29	| NOT	| 1 
+2A	| SHL	| 2 3 4 5 6 8
+2B	| SHR	| 2 3 4 5 6 8
+2C	| LT	| 2 3 4 5 6 8
+2D	| LE	| 2 3 4 5 6 8
+2E	| GT	| 2 3 4 5 6 8
+2F	| GE	| 2 3 4 5 6 8
+30	| CMP	| 2 3 4 5 6 8
+31	| LAND	| 2 3 4 5 6 8
+32	| LOR	| 2 3 4 5 6 8
+33	| LNOT	| 2 3 4 5 6 8
 40	| PUSH	| 1 7
 41	| POP 	| 0 1
-60	| CALL	| 7 8	
+60	| CALL	| 7 
 61	| CCALL	| 7
 62	| JMP	| 7
 63	| JIF	| 7

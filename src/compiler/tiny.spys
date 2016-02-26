@@ -2,9 +2,15 @@ section data
 ; C functions we will be using
 let printf				"printf"	; void	printf(format, ...);
 let malloc				"malloc"	; ptr	malloc(size);
+let strcpy				"strcpy"	; void	strcpy(dest, src);
 
 ; ----- constant strings -----
 let DEBUG_IO_INOUT		"input name: %s\noutput name: %s\n"
+
+; printf formats
+let FORMAT_SIMPLESTRING	"%s\n"
+let FORMAT_SIMPLECHAR	"%c\n"
+let FORMAT_SIMPLENUM	"%d\n"
 
 ; file system modes
 let FS_MODE_W			"w"
@@ -12,15 +18,30 @@ let FS_MODE_R			"r"
 let FS_MODE_WB			"wb"
 let FS_MODE_RB			"rb"
 
-; token debug output
-let TOKDEBUG_OUT		"(type '%s' : word '%s')\n"
-; token types
-let TOKTYPE_NUMBER		"NUMBER"
-let TOKTYPE_STRING		"STRING"
-let TOKTYPE_ADD			"ADD"
-let TOKTYPE_SUB			"SUB"
-let TOKTYPE_MUL			"MUL"
-let TOKTYPE_DIV			"DIV"
+; token information
+; TYPE_IDENTIFIER		0x01
+; TYPE_STRING			0x02
+; TYPE_NUMBER			0x03
+; TYPE_ADD				0x04
+; TYPE_SUB				0x05
+; TYPE_MUL				0x06
+; TYPE_DIV				0x07
+let TOK_DEBUG_OUT		"(type '%d' : word '%s')\n"
+
+; registers
+let REG_RIP				"RIP"
+let REG_RSP				"RSP"
+let REG_RBP				"RBP"
+let REG_RAX				"RAX"
+let REG_RBX				"RBX"
+let REG_RCX				"RCX"
+let REG_RDX				"RDX"
+let REG_REX				"REX"
+let REG_RFX				"RFX"
+let REG_RGX				"RGX"
+let REG_RHX				"RGX"
+let REG_RIX				"RIX"
+let REG_RJX				"RJX"
 
 
 ; CODE STARTS HERE
@@ -37,34 +58,41 @@ jmp			start
 ;	RFX: string TOKEN_WORD
 ; RET
 ;	returns a pointer to a Token
-;	[RAX - 0] is TOKEN_TYPE
-;	[RAX - 1] is TOKEN_WORD
+;	[RAX + 0] is TOKEN_TYPE
+;	[RAX + 1] is TOKEN_WORD
 __Token_new:
 	push	rbx
 	push	rbp
 	mov		rbp, rsp
-	sub		rsp, 2
+	add		rsp, 2
 	
 	; this function creates a new token 
 	; a token has two fields
-	; [t - 0] = token typeof
-	; [t - 1] = token word (ALL TOKENS HAVE WORDS, INCLUDING OPERATORS)
+	; [t + 0] = token typeof
+	; [t + 1] = token word (sizeof 128) 
 	
-	mov		[rbp - 1], rex 
-	mov		[rbp - 2], rfx
+	mov		[rbp + 1], rex 
+	mov		[rbp + 2], rfx
 	
 	; allocate some space for the token (two chunks)
-	mov		rex, 2
+	mov		rex, 129
 	push	1
 	ccall	malloc
 	
 	; the memory for the token is now stored in RAX
 	; assign to the fields in memory accordingly
-	mov		rbx, [rbp - 1]
-	mov		[rax - 0], rbx
-	mov		rbx, [rbp - 2]
-	mov		[rax - 1], rbx
+	; move the type in
+	mov		[rax + 0], [rbp + 1]
 	
+	; move the word in
+	mov		rex, rax
+	add		rex, 1
+	mov		rfx, [rbp + 2]
+	push	rax
+	push	2
+	ccall	strcpy
+	pop		rax
+
 	mov		rax, rax
 	mov		rsp, rbp
 	pop		rbp
@@ -77,19 +105,19 @@ __Token_print:
 	push	rbx
 	push	rbp
 	mov		rbp, rsp
-	sub		rsp, 1
+	add		rsp, 1
 
-	mov		[rbp - 1], rex
+	mov		[rbp + 1], rex
 
 	; print the token information
 	; load the format
-	mov		rex, TOKDEBUG_OUT
+	mov		rex, TOK_DEBUG_OUT
 	; load the type
-	mov		rbx, [rbp - 1]
-	mov		rfx, [rbx - 0]
+	mov		rfx, [rbp + 1]
+	mov		rfx, [rfx + 0]
 	; load the word
-	mov		rbx, [rbp - 1]
-	mov		rgx, [rbx - 1]
+	mov		rgx, [rbp + 1]
+	add		rgx, 1
 	; now print
 	push	3
 	ccall	printf
@@ -98,6 +126,23 @@ __Token_print:
 	xor		rax, rax
 	pop		rbp
 	pop		rbx
+	ret
+
+isalpha:
+	push	rbp
+	mov		rbp, rsp
+
+	ge		rex, 97
+	jif		C00
+	le		rex, 122
+	jif		C00
+	mov		rax, 1
+	jmp		C01
+C00:
+	mov		rax, 0
+C01:
+	mov		rsp, rbp
+	pop		rbp
 	ret
 	
 ; ARGUMENTS
@@ -108,47 +153,128 @@ __Token_print:
 start:
 	
 	mov		rbp, rsp	
-	sub		rsp, 7
+	add		rsp, 563
+	; STACK MAP
+	; FILE CONTENTS				in [rbp + 1]
+	; FILE CONTENTS LENGTH		in [rbp + 2]
+	; FILE NAME					in [rbp + 3]
+	; FILE OUTPUT NAME			in [rbp + 4]
+	; FILE COUNTER				in [rbp + 5]
+	; LOCAL CURRENT_CHAR		in [rbp + 6]
+	; GENERAL PURPOSE NUMBS		in [rbp + [6, 50]]
+	; GENERAL PURPOSE BUFFER	in [rbp + 51] (of size 512)
 
-	; FILE CONTENTS				in [rbp - 1]
-	; FILE CONTENTS LENGTH		in [rbp - 2]
-	; FILE NAME					in [rbp - 3]
-	; FILE OUTPUT NAME			in [rbp - 4]
-	mov		[rbp - 1], rex
-	mov		[rbp - 2], rfx
-	mov		[rbp - 3], rgx
-	mov		[rbp - 4], rhx	
+	; FILE CONTENTS				in [rbp + 1]
+	; FILE CONTENTS LENGTH		in [rbp + 2]
+	; FILE NAME					in [rbp + 3]
+	; FILE OUTPUT NAME			in [rbp + 4]
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], rfx
+	mov		[rbp + 3], rgx
+	mov		[rbp + 4], rhx	
 	
 	; print some debugging information
 	mov		rex, DEBUG_IO_INOUT
-	mov		rfx, [rbp - 3]
-	mov		rgx, [rbp - 4]
+	mov		rfx, [rbp + 3]
+	mov		rgx, [rbp + 4]
 	push	3
 	ccall	printf	
 
-	; create some token
-	mov		rex, TOKTYPE_NUMBER
-	mov		rfx, FS_MODE_W
-	call	__Token_new
-
-	; FILE COUNTER		in [rbp - 5]
-	mov		[rbp - 5], 0
+	; FILE COUNTER		in [rbp + 5]
+	mov		[rbp + 5], 0
 
 ; while (FILE_COUNTER < FILE_CONTENTS_LENGTH)
-L00:
+D00:
 	; FILE_COUNTER < FILE_CONTENTS_LENGTH
-	mov		rbx, [rbp - 5]
-	lt		rbx, [rbp - 2]
-	jif		L01
+	mov		rbx, [rbp + 5]
+	lt		rbx, [rbp + 2]
+	jif		D01
+	
+	; load the current character into [rbp + 6]
+	mov		rbx, [rbp + 1]			; [rbp + 1] is file contents pointer
+	add		rbx, [rbp + 5]			; [rbp + 5] is current index in file contents
+	mov		[rbp + 6], [rbx + 0]	; [rbp + 6] now contains the current character
 
-	; TOKEN_TYPE in [rbp - 6]
-	; TOKEN_WORD in [rbp - 7]
-	mov		[rbp - 6], 0
-	mov		[rbp - 7], 0
+	cmp		[rbp + 6], 32	; skip if is whitespace
+	jit		D08
+	cmp		[rbp + 6], 10	; skip if is newline
+	jit		D08
+	cmp		[rbp + 6], 9	; skip if is tab
+	jit		D08
 
-	add		[rbp - 5], 1
-	jmp		L00
-L01:
+	; here is the start of the branching process
+	; this is where we handle the difference between
+	; an identifier, a string, a number, etc
+	;	LABEL NOTES
+	;		end of branch is D02
+	;		
+	; (c >= 'a' && c <= 'z');
+	mov		rex, [rbp + 6]
+	call	isalpha
+	cmp		rax, 1
+	jif		D07
+	; decided true
+	; note that there is a general purpose buffer located at [rbp + 51]
+	; we will use that buffer to store the identifier
+	mov		[rbp + 51], [rbp + 6]
+	; note that we use the general purpose loca [rbp + 7] to store
+	; the pointer to the top of the buffer at [rbp + 51]
+	; also note we start with 1 because we already wrote the first character above
+	mov		[rbp + 7], 1
+D05: ; START IDENTIFIER LOOP
+	add		[rbp + 5], 1			; increase FILE_COUNTER by one
+	mov		rax, [rbp + 1]			; load file pointer into rax
+	add		rax, [rbp + 5]			; load current character pointer into rax
+	mov		[rbp + 6], [rax + 0]	; [rbp + 6] now contains current character (dereferenced rax)
+	mov		rex, [rbp + 6]
+	call	isalpha
+	cmp		rax, 1
+	jif		D06
+
+	; we've made sure the character is alpha, now append it to the buffer
+	mov		rax, rbp
+	add		rax, 51
+	add		rax, [rbp + 7]
+	mov		[rax + 0], [rbp + 6]
+
+	add		[rbp + 7], 1 ; increase the buffer pointer
+
+	jmp		D05
+D06: ; END IDENTIFIER LOOP
+	; decrease FILE_COUNTER by 1
+	sub		[rbp + 5], 1
+	; null terminate the buffer
+	mov		rax, rbp
+	add		rax, 51
+	add		rax, [rbp + 7]
+	mov		[rax + 0], 0
+
+	mov		rex, 1
+	mov		rfx, rbp
+	add		rfx, 51
+	call	__Token_new
+	mov		rex, rax
+	call	__Token_print
+	jmp		D02
+
+D07: ; ELSE IF IS OPERATOR
+	mov		[rbp + 51], [rbp + 6]
+	mov		[rbp + 52], 0
+	mov		rex, 2
+	mov		rfx, rbp
+	add		rfx, 51
+	call	__Token_new
+	mov		rex, rax
+	call	__Token_print
+	jmp		D02
+
+D08: ; JUMP TO HERE TO IGNORE
+	
+D02: ; LEX LOOP INCREMENT FILE_COUNTER
+
+	add		[rbp + 5], 1
+	jmp		D00
+D01: ; END LEX LOOP
 	
 
 	exit
