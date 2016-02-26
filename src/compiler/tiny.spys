@@ -311,7 +311,7 @@ L06: ; END IDENTIFIER LOOP
 	add		rfx, 51
 	call	__Token_new
 	mov		[rbp + 8], rax
-	jmp		L02
+	jmp		L02 
 
 L09: ; ELSE IF IS NUMBER
 	; go to next if statement if its not a digit
