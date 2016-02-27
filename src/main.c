@@ -1,6 +1,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+#include <unistd.h>
 #include <lua.h>
 #include <lualib.h>
 #include <lauxlib.h>
@@ -12,6 +13,21 @@
 
 int main(int argc, char** argv) {
 	
+	int flags[16];
+	memset(flags, 0, sizeof(flags));
+	// flags[0] -c
+	// flags[1] -r
+	// flags[2] -d
+	int c;
+
+	while ((c = getopt(argc, argv, "crd:")) != -1) {
+		switch (c) {
+			case 'c': flags[0] = 1; break;
+			case 'r': flags[1] = 1; break;
+			case 'd': flags[2] = 1; break;
+		}	
+	}
+		
 	spy_state* S = spy_newstate();
 	lexb_state* L = lexb_newstate();
 	FILE* src = fopen(argv[1], "r");
