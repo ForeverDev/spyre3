@@ -4,6 +4,8 @@ let printf				"printf"	; void	printf(format, ...);
 let malloc				"malloc"	; ptr	malloc(size);
 let free				"free"		; ptr	free(ptr);
 let strcpy				"strcpy"	; void	strcpy(dest, src);
+let memcpy				"memcpy"	; void	memcpy(dest, src, length);
+let memset				"memset"	; void	memset(dest, imm, length);
 
 ; ----- constant strings -----
 let DEBUG_IO_INOUT		"input name: %s\noutput name: %s\n"
@@ -19,7 +21,9 @@ let FS_MODE_R			"r"
 let FS_MODE_WB			"wb"
 let FS_MODE_RB			"rb"
 
+; token variables
 let TOK_DEBUG_OUT		"(type %d : word '%s')\n"
+let TOK_EOF				"EOF"
 
 ; registers
 let REG_RIP				"RIP"
@@ -76,12 +80,7 @@ let INS_MODE4			"%s\t%s, [%s + %d]"
 let INS_MODE5			"%s\t[%s + %d], %d"
 let INS_MODE6			"%s\t[%s + %d]"
 
-; CODE STARTS HERE
-; some quick notes about the style of the code:
-;	- a method of a 'class' has two underscores (__) before the name
-;	- all 'class' methods take 'this' in as the first parameter
-;	- for organizational purposes, arguments passed to a function are
-;	  loaded onto the stack by the callee	
+; --------------- START LEXER ---------------
 section code
 jmp			start
 
@@ -231,13 +230,9 @@ E01:
 	pop		rbp
 	ret
 	
-; ARGUMENTS
-; REX FILE CONTENTS
-; RFX FILE CONTENTS LENGTH
-; RGX FILE NAME
-; RHX FILE OUTPUT NAME
-start:
+generateTokens:
 	
+	push	rbp
 	mov		rbp, rsp	
 	add		rsp, 2048
 	; STACK MAP
@@ -581,6 +576,17 @@ L08: ; JUMP HERE TO SKIP
 	add		[rbp + 5], 1
 	jmp		L00
 L01: ; END LEX LOOP
+
+	; add a null token
+	mov		rex, 0
+	mov		rfx, TOK_EOF
+	call	__Token_new
+	mov		[rbp + 8], rax
+	mov		rax, rbp
+	add		rax, 563
+	add		rax, [rbp + 562]
+	mov		[rax + 0], [rbp + 8]
+	add		[rbp + 562], 1
 	
 	; print tokens for debugging
 	mov		rex, rbp
@@ -588,4 +594,143 @@ L01: ; END LEX LOOP
 	mov		rfx, [rbp + 562]		
 	call	printAllTokens
 
+	; return a pointer to the tokens
+	mov		rax, rbp
+	add		rax, 563
+	
+	mov		rsp, rbp
+	pop		rbp	
+	ret
+
+; --------------- START PARSER ---------------
+
+; ARGS
+;	REX: type
+;	RFX: relation
+;	RGX: gen0 array
+;	RHX: gen1 array
+;	RIX: gen2 array
+__Chunk_new:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 6
+	
+	mov		[rbp + 1], rex ; type
+	mov		[rbp + 2], rfx ; relation
+	mov		[rbp + 3], rgx ; gen0 array
+	mov		[rbp + 4], rhx ; gen1 array
+	mov		[rbp + 5], rix ; gen2 array
+
+	mov		rex, 195
+	push	1
+	ccall	malloc
+	mov		[rbp + 6], rax			; save rax onto stack for later
+
+	mov		[rax + 0], [rbp + 1]	; type
+	mov		[rax + 1], [rbp + 2]	; relation
+	mov		[rax + 2], 0			; next
+	mov		[rax + 3], 0			; genptr0
+	mov		[rax + 4], 0			; genptr1
+	mov		[rax + 5], 0			; genptr2
+
+	mov		rax, [rbp + 6]			; gen0 array
+	add		rax, 6
+	cmp		[rbp + 3], 0
+	jif		Chunk_new00
+	mov		[rax + 0], 0
+	jmp		Chunk_new01
+Chunk_new00:
+	mov		rex, rax
+	mov		rfx, [rbp + 3]
+	mov		rgx, 64
+	push	3
+	ccall	memcpy
+Chunk_new01:
+
+	mov		rax, [rbp + 6]			; gen1 array
+	add		rax, 69
+	cmp		[rbp + 4], 0
+	jif		Chunk_new02
+	mov		[rax + 0], 0
+	jmp		Chunk_new03
+Chunk_new02:
+	mov		rex, rax
+	mov		rfx, [rbp + 3]
+	mov		rgx, 64
+	push	3
+	ccall	memcpy
+Chunk_new03:
+
+	mov		rax, [rbp + 6]			; gen2 array
+	add		rax, 132
+	cmp		[rbp + 5], 0
+	jif		Chunk_new04
+	mov		[rax + 0], 0
+	jmp		Chunk_new05
+Chunk_new04:
+	mov		rex, rax
+	mov		rfx, [rbp + 3]
+	mov		rgx, 64
+	push	3
+	ccall	memcpy
+Chunk_new05:
+
+	; return the new chunk
+	mov		rax, [rbp + 6]
+
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+; ARGS
+;	REX: chunk
+__Chunk_print:
+	push	rbp
+	mov		rbp, rsp
+	
+	mov		rsp, rbp
+	pop		rbp
+	ret	
+
+; ARGS
+;	REX: array of tokens
+generateTree:
+	push	rbp
+	mov		rbp, rsp
+	
+	mov		rsp, rbp
+	pop		rbp
+	ret	
+
+; ARGUMENTS
+; REX FILE CONTENTS
+; RFX FILE CONTENTS LENGTH
+; RGX FILE NAME
+; RHX FILE OUTPUT NAME
+start:
+	push	rbp
+	mov		rbp, rsp
+	
+	; STACK MAP
+	; FILE CONTENTS				[rbp + 1]
+	; FILE CONTENTS LENGTH		[rbp + 2]
+	; FILE NAME					[rbp + 3]
+	; FILE OUTPUT NAME			[rbp + 4]
+	; TOKENS					[rbp + 5]
+
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], rfx
+	mov		[rbp + 3], rgx
+	mov		[rbp + 4], rhx
+
+	mov		rex, [rbp + 1]
+	mov		rfx, [rbp + 2]
+	mov		rgx, [rbp + 3]
+	mov		rhx, [rbp + 4]
+	call	generateTokens
+	mov		[rbp + 5], rax
+
+	mov		rsp, rbp
+	pop		rbp
 	exit
+

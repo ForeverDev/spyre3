@@ -24,5 +24,7 @@ static void spyL_str_strcat(spy_state*, u8);
 
 static void spyL_mem_malloc(spy_state*, u8);
 static void spyL_mem_free(spy_state*, u8);
+static void spyL_mem_memcpy(spy_state*, u8);
+static void spyL_mem_memset(spy_state*, u8);
 
 #endif
