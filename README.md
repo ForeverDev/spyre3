@@ -77,8 +77,8 @@ Memory map
 SECTION	| START			| FINISH	
 --------|-----------------------|-------
 ROM	| 0			| SIZE\_ROM - 1
-STACK	| SIZE_ROM		| SIZE\_ROM + SIZE\_STACK - 1
-HEAP	| SIZE_ROM + SIZE_STACK	| SIZE\_MEMORY - 1
+STACK	| SIZE\_ROM		| SIZE\_ROM + SIZE\_STACK - 1
+HEAP	| SIZE\_ROM + SIZE\_STACK	| SIZE\_MEMORY - 1
 
 
 Calling convention

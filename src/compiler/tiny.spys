@@ -2,6 +2,7 @@ section data
 ; C functions we will be using
 let printf				"printf"	; void	printf(format, ...);
 let malloc				"malloc"	; ptr	malloc(size);
+let free				"free"		; ptr	free(ptr);
 let strcpy				"strcpy"	; void	strcpy(dest, src);
 
 ; ----- constant strings -----
@@ -18,15 +19,7 @@ let FS_MODE_R			"r"
 let FS_MODE_WB			"wb"
 let FS_MODE_RB			"rb"
 
-; token information
-; TYPE_IDENTIFIER		0x01
-; TYPE_STRING			0x02
-; TYPE_NUMBER			0x03
-; TYPE_ADD				0x04
-; TYPE_SUB				0x05
-; TYPE_MUL				0x06
-; TYPE_DIV				0x07
-let TOK_DEBUG_OUT		"(type '%d' : word '%s')\n"
+let TOK_DEBUG_OUT		"(type %d : word '%s')\n"
 
 ; registers
 let REG_RIP				"RIP"
@@ -43,6 +36,45 @@ let REG_RHX				"RGX"
 let REG_RIX				"RIX"
 let REG_RJX				"RJX"
 
+; instructions
+let	INS_NOOP			"NOOP"
+let INS_EXIT			"EXIT"
+let INS_RET				"RET"
+let INS_MOV				"MOV"
+let INS_ADD				"ADD"
+let INS_SUB				"SUB"	
+let INS_MUL				"MUL"
+let INS_DIV				"DIV"
+let INS_NEG				"NEG"
+let INS_OR				"OR"
+let INS_AND				"AND"
+let INS_XOR				"XOR"
+let INS_NOT				"NOT"
+let INS_SHL				"SHL"
+let INS_SHR				"SHR"
+let INS_LT				"LT"
+let INS_LE				"LE"
+let INS_GT				"GT"
+let INS_GE				"GE"
+let INS_CMP				"CMP"
+let INS_LAND			"LAND"
+let INS_LOR				"LOR"
+let INS_LNOT			"LNOT"
+let INS_PUSH			"PUSH"
+let INS_POP				"POP"
+let INS_CALL			"CALL"
+let INS_CCALL			"CCALL"
+let INS_JMP				"JMP"
+let INS_JIF				"JIF"
+let INS_JIT				"JIT"
+
+let INS_MODE0			"%s\t"
+let INS_MODE1			"%s\t%s" 
+let INS_MODE2			"%s\t%s, %d"
+let INS_MODE3			"%s\t%s, %s"
+let INS_MODE4			"%s\t%s, [%s + %d]"
+let INS_MODE5			"%s\t[%s + %d], %d"
+let INS_MODE6			"%s\t[%s + %d]"
 
 ; CODE STARTS HERE
 ; some quick notes about the style of the code:
@@ -373,9 +405,161 @@ L11: ; END NUMBER LOOP
 
 
 L07: ; ELSE IF IS OPERATOR
+	; now we know that the character is some sort of punctuation or operator
+	; we need to set the type of the token accordingly
+
+	; note we store the correct type for the token in the
+	; general purpose offset [rbp + 9]
 	mov		[rbp + 51], [rbp + 6]
-	mov		[rbp + 52], 0
-	mov		rex, 2
+	mov		[rbp + 52], 0 ; initialize the type to TYPE_UNKNOWN
+	mov		[rbp + 9], 0
+	; switch(character)
+	cmp		[rbp + 6], 43 ; case +
+	jif		L13
+	mov		[rbp + 9], 4
+	jmp		L12
+L13:
+	cmp		[rbp + 6], 45 ; case -
+	jif		L14
+	mov		[rbp + 9], 5
+	jmp		L12
+L14:
+	cmp		[rbp + 6], 42 ; case *
+	jif		L15
+	mov		[rbp + 9], 6
+	jmp		L12
+L15:
+	cmp		[rbp + 6], 47 ; case /
+	jif		L16
+	mov		[rbp + 9], 7
+	jmp		L12
+L16:
+	cmp		[rbp + 6], 37 ; case %
+	jif		L17
+	mov		[rbp + 9], 8
+	jmp		L12
+L17:
+	cmp		[rbp + 6], 38 ; case &
+	jif		L18
+	mov		[rbp + 9], 9
+	jmp		L12
+L18:
+	cmp		[rbp + 6], 124 ; case |
+	jif		L19
+	mov		[rbp + 9], 10
+	jmp		L12
+L19:
+	cmp		[rbp + 6], 94 ; case ^
+	jif		L20
+	mov		[rbp + 9], 11
+	jmp		L12
+L20:
+	cmp		[rbp + 6], 59 ; case ;
+	jif		L21
+	mov		[rbp + 9], 12
+	jmp		L12
+L21:
+	cmp		[rbp + 6], 58 ; case :
+	jif		L22
+	mov		[rbp + 9], 13
+	jmp		L12
+L22:
+	cmp		[rbp + 6], 40 ; case (
+	jif		L23
+	mov		[rbp + 9], 14
+	jmp		L12
+L23:
+	cmp		[rbp + 6], 41 ; case )
+	jif		L24
+	mov		[rbp + 9], 15
+	jmp		L12
+L24:
+	cmp		[rbp + 6], 123 ; case {
+	jif		L25
+	mov		[rbp + 9], 16
+	jmp		L12
+L25:
+	cmp		[rbp + 6], 125 ; case }
+	jif		L26
+	mov		[rbp + 9], 17
+	jmp		L12
+L26:
+	cmp		[rbp + 6], 91 ; case [
+	jif		L27
+	mov		[rbp + 9], 18
+	jmp		L12
+L27:
+	cmp		[rbp + 6], 93 ; case ]
+	jif		L28
+	mov		[rbp + 9], 19
+	jmp		L12
+L28:
+	cmp		[rbp + 6], 60 ; case <
+	jif		L29
+	; check if <=
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 5]
+	add		rax, 1
+	cmp		[rax + 0], 61
+	jif		L28_
+	; is <=, rewrite word
+	mov		[rbp + 52], 61 
+	mov		[rbp + 53], 0
+	mov		[rbp + 9], 25
+	add		[rbp + 5], 1
+	jmp		L12
+L28_:
+	mov		[rbp + 9], 20
+	jmp		L12
+L29:
+	cmp		[rbp + 6], 62 ; case >
+	jif		L30
+	; check if >=
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 5]
+	add		rax, 1
+	cmp		[rax + 0], 61
+	jif		L29_
+	; is >=, rewrite word
+	mov		[rbp + 52], 61
+	mov		[rbp + 53], 0
+	mov		[rbp + 9], 26
+	add		[rbp + 5], 1
+	jmp		L12
+L29_:
+	mov		[rbp + 9], 21
+	jmp		L12
+L30:
+	cmp		[rbp + 6], 61 ; case =
+	jif		L31
+	; check if ==
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 5]
+	add		rax, 1
+	cmp		[rax + 0], 61
+	jif		L30_
+	; is ==, rewrite word
+	mov		[rbp + 52], 61
+	mov		[rbp + 53], 0
+	mov		[rbp + 9], 27
+	add		[rbp + 5], 1
+	jmp		L12
+L30_:
+	mov		[rbp + 9], 22
+	jmp		L12
+L31:
+	cmp		[rbp + 6], 44 ; case ,
+	jif		L32
+	mov		[rbp + 9], 23
+	jmp		L12
+L32:
+	cmp		[rbp + 6], 46 ; case .
+	jif		L33
+	mov		[rbp + 9], 24
+	jmp		L12
+L33:
+L12:
+	mov		rex, [rbp + 9]
 	mov		rfx, rbp
 	add		rfx, 51
 	call	__Token_new
@@ -405,4 +589,3 @@ L01: ; END LEX LOOP
 	call	printAllTokens
 
 	exit
-

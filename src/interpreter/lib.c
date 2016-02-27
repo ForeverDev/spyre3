@@ -41,6 +41,9 @@ void spyL_io_printf(spy_state* S, u8 nargs) {
 						printf("%s", spy_getstr(S, spy_getarg(S, i++), genbuf));
 						break;
 					case 'd':
+						printf("%lld", spy_getint(S, spy_getarg(S, i++)));
+						break;
+					case 'f':
 						printf("%f", spy_getfloat(S, spy_getarg(S, i++)));
 						break;
 					case 'x':

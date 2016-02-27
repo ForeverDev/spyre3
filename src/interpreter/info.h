@@ -3,7 +3,7 @@
 
 #define SIZE_ROM			0x05000		
 #define SIZE_STACK			0x10000
-#define SIZE_MEMORY			0x50000
+#define SIZE_MEMORY			0x500000	// 0.5 GiB
 
 #define START_ROM			0x00
 #define START_STACK			(START_ROM + SIZE_ROM)
