@@ -1,31 +1,67 @@
-; token information
-; TYPE_UNKNOWN			00
-; TYPE_IDENTIFIER		01
-; TYPE_STRING			02
-; TYPE_NUMBER			03
+token information
+TYPE_UNKNOWN		00
+TYPE_IDENTIFIER		01
+TYPE_STRING			02
+TYPE_NUMBER			03
+TYPE_ADD			04
+TYPE_SUB			05
+TYPE_MUL			06
+TYPE_DIV			07
+TYPE_MOD			08
+TYPE_AND			09
+TYPE_OR				10
+TYPE_XOR			11
+TYPE_SEMICOLON		12
+TYPE_COLON			13
+TYPE_OPENPAR		14
+TYPE_CLOSEPAR		15
+TYPE_OPENCURL		16
+TYPE_CLOSECURL		17
+TYPE_OPENSQ			18
+TYPE_CLOSESQ		19
+TYPE_LT				20
+TYPE_GT				21
+TYPE_EQ				22
+TYPE_COMMA			23
+TYPE_PERIOD			24
+TYPE_NEWLINE		25
+TYPE_LE				25
+TYPE_GE				26
+TYPE_CMP			27
+TYPE_FUNC			101
+TYPE_IF				102
+TYPE_WHILE			103
+TYPE_DO				104
+TYPE_FOR			105
+TYPE_BREAK			106
+TYPE_CONTINUE		107
+TYPE_RETURN			108
+TYPE_DATATYPE		109
 
-; TYPE_ADD				04
-; TYPE_SUB				05
-; TYPE_MUL				06
-; TYPE_DIV				07
-; TYPE_MOD				08
-; TYPE_AND				09
-; TYPE_OR				10
-; TYPE_XOR				11
-; TYPE_SEMICOLON		12
-; TYPE_COLON			13
-; TYPE_OPENPAR			14
-; TYPE_CLOSEPAR			15
-; TYPE_OPENCURL			16
-; TYPE_CLOSECURL		17
-; TYPE_OPENSQ			18
-; TYPE_CLOSESQ			19
-; TYPE_LT				20
-; TYPE_GT				21
-; TYPE_EQ				22
-; TYPE_COMMA			23
-; TYPE_PERIOD			24
 
-; TYPE_LE				25
-; TYPE_GE				26
-; TYPE_CMP				27
+struct token {
+	int				type;
+	char			word[128];
+}
+[0] = type
+[1, 129) = word
+
+struct token_list {
+	token*			value;
+	token_list*		next;
+}
+[0] = value
+[1] = next
+
+struct chunk {
+	int				type;
+	int				relation;
+	chunk*			next;
+	chunk*			last;
+	token_list*		general[4];
+}
+[0] = type
+[1] = relation
+[2] = next
+[3] = last
+[4, 8) = general

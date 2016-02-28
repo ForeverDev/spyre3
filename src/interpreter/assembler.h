@@ -45,7 +45,9 @@ typedef enum compb_opcodes {
 	CCALL	= 0x61,
 	JMP		= 0x62,
 	JIF		= 0x63,
-	JIT		= 0x64
+	JIT		= 0x64,
+
+	DLOG	= 0xf0
 
 } compb_opcodes;
 

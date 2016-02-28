@@ -1,19 +1,21 @@
 section data
 ; C functions we will be using
-let printf				"printf"	; void	printf(format, ...);
-let malloc				"malloc"	; ptr	malloc(size);
-let free				"free"		; ptr	free(ptr);
-let strcpy				"strcpy"	; void	strcpy(dest, src);
-let memcpy				"memcpy"	; void	memcpy(dest, src, length);
-let memset				"memset"	; void	memset(dest, imm, length);
+let printf				"printf"
+let malloc				"malloc"
+let free				"free"	
+let strcpy				"strcpy"
+let memcpy				"memcpy"
+let memset				"memset"
+let strcmp				"strcmp"
 
 ; ----- constant strings -----
 let DEBUG_IO_INOUT		"input name: %s\noutput name: %s\n"
 
 ; printf formats
-let FORMAT_SIMPLESTRING	"%s\n"
-let FORMAT_SIMPLECHAR	"%c\n"
-let FORMAT_SIMPLENUM	"%d\n"
+let FORMAT_STRING		"%s\n"
+let FORMAT_CHAR			"%c\n"
+let FORMAT_NUM			"%d\n"
+let FORMAT_HEX			"%x\n"
 
 ; file system modes
 let FS_MODE_W			"w"
@@ -24,6 +26,18 @@ let FS_MODE_RB			"rb"
 ; token variables
 let TOK_DEBUG_OUT		"(type %d : word '%s')\n"
 let TOK_EOF				"EOF"
+
+; tokenlist variables
+let TOK_LIST_DEBUG_HEAD	"TOKENLIST:\n"
+let TOK_KW_FUNC			"func"
+let TOK_KW_IF			"if"
+let TOK_KW_WHILE		"while"
+let TOK_KW_DO			"do"
+let TOK_KW_FOR			"for"
+let TOK_KW_BREAK		"break"
+let TOK_KW_CONTINUE		"continue"
+let TOK_KW_RETURN		"return"
+
 
 ; registers
 let REG_RIP				"RIP"
@@ -79,6 +93,8 @@ let INS_MODE3			"%s\t%s, %s"
 let INS_MODE4			"%s\t%s, [%s + %d]"
 let INS_MODE5			"%s\t[%s + %d], %d"
 let INS_MODE6			"%s\t[%s + %d]"
+let INS_MODE7			"%s\t%d"
+let INS_MODE8			"%s\t[%s + %d], [%s + %d]"
 
 ; --------------- START LEXER ---------------
 section code
@@ -281,8 +297,6 @@ L00:
 
 	cmp		[rbp + 6], 32	; skip if is whitespace
 	jit		L08
-	cmp		[rbp + 6], 10	; skip if is newline
-	jit		L08
 	cmp		[rbp + 6], 9	; skip if is tab
 	jit		L08
 
@@ -332,8 +346,28 @@ L06: ; END IDENTIFIER LOOP
 	add		rax, 51
 	add		rax, [rbp + 7]
 	mov		[rax + 0], 0
-
-	mov		rex, 1
+	
+	mov		rex, rbp
+	add		rex, 51
+	mov		rfx, TOK_KW_FUNC	; check 'func'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_01
+	mov		[rbp + 9], 101
+	jmp		L06_00
+L06_01:	
+	mov		rfx, TOK_KW_IF		; check 'if'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_else
+	mov		[rbp + 9], 102
+	jmp		L06_00
+L06_else:
+	mov		[rbp + 9], 1
+L06_00:
+	mov		rex, [rbp + 9]
 	mov		rfx, rbp
 	add		rfx, 51
 	call	__Token_new
@@ -553,6 +587,15 @@ L32:
 	mov		[rbp + 9], 24
 	jmp		L12
 L33:
+	cmp		[rbp + 6], 10 ; case \n
+	jif		L34
+	; because it's a newline we don't actually want the
+	; word of the token to be '\n' (for debugging reasons)
+	; here we just overwrite the word
+	mov		[rbp + 51], 0
+	mov		[rbp + 9], 25
+	jmp		L12
+L34:
 L12:
 	mov		rex, [rbp + 9]
 	mov		rfx, rbp
@@ -572,6 +615,8 @@ L02: ; LEX LOOP INCREMENT FILE_COUNTER
 	; now increase the token pointer
 	add		[rbp + 562], 1
 
+	mov		rex, [rbp + 8]
+
 L08: ; JUMP HERE TO SKIP
 	add		[rbp + 5], 1
 	jmp		L00
@@ -587,12 +632,6 @@ L01: ; END LEX LOOP
 	add		rax, [rbp + 562]
 	mov		[rax + 0], [rbp + 8]
 	add		[rbp + 562], 1
-	
-	; print tokens for debugging
-	mov		rex, rbp
-	add		rex, 563
-	mov		rfx, [rbp + 562]		
-	call	printAllTokens
 
 	; return a pointer to the tokens
 	mov		rax, rbp
@@ -607,76 +646,13 @@ L01: ; END LEX LOOP
 ; ARGS
 ;	REX: type
 ;	RFX: relation
-;	RGX: gen0 array
-;	RHX: gen1 array
-;	RIX: gen2 array
+;	RGX: token_list0
+;	RHX: token_list1
+;	RIX: token_list2
+;	RJX: token_list3
 __Chunk_new:
 	push	rbp
 	mov		rbp, rsp
-	add		rsp, 6
-	
-	mov		[rbp + 1], rex ; type
-	mov		[rbp + 2], rfx ; relation
-	mov		[rbp + 3], rgx ; gen0 array
-	mov		[rbp + 4], rhx ; gen1 array
-	mov		[rbp + 5], rix ; gen2 array
-
-	mov		rex, 195
-	push	1
-	ccall	malloc
-	mov		[rbp + 6], rax			; save rax onto stack for later
-
-	mov		[rax + 0], [rbp + 1]	; type
-	mov		[rax + 1], [rbp + 2]	; relation
-	mov		[rax + 2], 0			; next
-	mov		[rax + 3], 0			; genptr0
-	mov		[rax + 4], 0			; genptr1
-	mov		[rax + 5], 0			; genptr2
-
-	mov		rax, [rbp + 6]			; gen0 array
-	add		rax, 6
-	cmp		[rbp + 3], 0
-	jif		Chunk_new00
-	mov		[rax + 0], 0
-	jmp		Chunk_new01
-Chunk_new00:
-	mov		rex, rax
-	mov		rfx, [rbp + 3]
-	mov		rgx, 64
-	push	3
-	ccall	memcpy
-Chunk_new01:
-
-	mov		rax, [rbp + 6]			; gen1 array
-	add		rax, 69
-	cmp		[rbp + 4], 0
-	jif		Chunk_new02
-	mov		[rax + 0], 0
-	jmp		Chunk_new03
-Chunk_new02:
-	mov		rex, rax
-	mov		rfx, [rbp + 3]
-	mov		rgx, 64
-	push	3
-	ccall	memcpy
-Chunk_new03:
-
-	mov		rax, [rbp + 6]			; gen2 array
-	add		rax, 132
-	cmp		[rbp + 5], 0
-	jif		Chunk_new04
-	mov		[rax + 0], 0
-	jmp		Chunk_new05
-Chunk_new04:
-	mov		rex, rax
-	mov		rfx, [rbp + 3]
-	mov		rgx, 64
-	push	3
-	ccall	memcpy
-Chunk_new05:
-
-	; return the new chunk
-	mov		rax, [rbp + 6]
 
 	mov		rsp, rbp
 	pop		rbp
@@ -687,29 +663,275 @@ Chunk_new05:
 __Chunk_print:
 	push	rbp
 	mov		rbp, rsp
-	
+
 	mov		rsp, rbp
 	pop		rbp
 	ret	
+
+; ARGS
+;	REX token
+__TokenList_new:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 1
+
+	mov		[rbp + 1], rex
+	
+	; allocate memory for the list
+	mov		rex, 2
+	push	1
+	ccall	malloc
+
+	mov		[rax + 0], [rbp + 1]
+	; also write a null pointer for the `next` field because
+	; there is no next token yet
+	mov		[rax + 1], 0
+
+	mov		rax, rax
+
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+; ARGS
+;	REX: TokenList
+__TokenList_getTail:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 2
+
+	; [rbp + 1] is TokenList
+	mov		[rbp + 1], rex
+
+getTail00:
+	; while (t->next != NULL)
+	mov		rax, [rbp + 1]
+	cmp		[rax + 1], 0
+	jit		getTail01
+
+	; t = t->next;
+	mov		rax, [rbp + 1]
+	mov		[rbp + 1], [rax + 1]
+
+	jmp		getTail00
+getTail01:
+	
+	mov		rax, [rbp + 1]
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+; ARGS
+;	REX: TokenList head
+;	RFX: TokenList to append
+__TokenList_append:
+	push	rbp
+	push	rbx
+	mov		rbp, rsp
+	add		rsp, 2
+	
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], rfx
+	
+	; if head->value is NULL, then just set
+	; head to the new token, don't append
+	mov		rax, [rbp + 1]
+	cmp		[rax + 0], 0
+	jif		append01
+append00:
+	; head->next remains NULL
+	; head->value becomes to_append->value
+	mov		rax, [rbp + 1]
+	mov		rbx, [rbp + 2]
+	mov		[rax + 0], [rbx + 0]
+	mov		[rax + 1], 0
+	mov		[rbx + 1], 0
+	jmp		append02
+append01:
+
+	; set to_append->next to null
+	mov		rax, [rbp + 2]
+	mov		[rax + 1], 0
+
+	; get the tail of the TokenList to append to
+	mov		rex, [rbp + 1]
+	; TODO FIX SEG FAULT IN __TOKENLIST_GETTAIL!!!!!
+	call	__TokenList_getTail
+	; now set TokenList->tail->next to the TokenList we just created
+	mov		[rax + 1], [rbp + 2]
+append02:
+
+	mov		rsp, rbp
+	pop		rbx
+	pop		rbp
+	ret
+
+; ARGS
+;	REX: TokenList
+__TokenList_print:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 3
+	
+	; [rbp + 1] TokenList
+	; [rbp + 2] TokenList->tail
+	mov		[rbp + 1], rex
+	
+	; printf("TOKENLIST:\n");
+	mov		rex, TOK_LIST_DEBUG_HEAD
+	push	1
+	ccall	printf
+
+	mov		[rbp + 3], [rbp + 1]
+print00:
+	; while (t != NULL)
+	cmp		[rbp + 3], 0
+	jit		print01
+
+	; if there is no token being pointed to
+	; then continue
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 0
+	jit		print02
+
+	mov		rex, [rbp + 3]
+	mov		rex, [rex + 0]
+	call	__Token_print
+
+	; t = t->next
+print02:
+	mov		rax, [rbp + 3]
+	mov		[rbp + 3], [rax + 1]
+
+	jmp		print00
+print01:
+
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+; ARGS
+;	REX: type
+;	RFX: relation
+;	RGX: pointer to last
+__Chunk_new:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 4
+
+	; [rbp + 1] type
+	; [rbp + 2] relation
+	; [rbp + 3] pointer to last
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], rfx
+	mov		[rbp + 3], rgx
+
+	; allocate some memory for a chunk
+	mov		rex, 8
+	push	1
+	ccall	malloc
+	mov		[rbp + 4], rax ; [rbp + 4] chunk
+
+	mov		rax, [rbp + 4]
+	mov		[rax + 0], [rbp + 1] ; set chunk->type
+	mov		[rax + 1], [rbp + 2] ; set chunk->relation
+	mov		[rax + 3], [rbp + 3] ; set chubk->last
+
+	; initialize general lists to NULL
+	mov		[rax + 4], 0
+	mov		[rax + 5], 0
+	mov		[rax + 6], 0
+	mov		[rax + 7], 0
+	
+	mov		rax, [rbp + 4]
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+; ARGS
+;	REX: chunk
+;	RFX: index
+;	RGX: token_list
+__Chunk_setGeneralField:
+	push	rbp
+	mov		rbp, rsp
+	sub		rsp,
+
+	mov		[rbp + 1], rex ; chunk
+	mov		[rbp + 2], rfx ; index
+	mov		[rbp + 3], rgx ; token_list
+
+	; find the location we want to write to
+	mov		rax, [rbp + 1]
+	add		rax, 4
+	add		rax, [rbp + 2]
+
+	; now write
+	mov		[rax + 0], [rbp + 3]
+
+	mov		rsp, rbp
+	pop		rbp
+	ret	
+
 
 ; ARGS
 ;	REX: array of tokens
 generateTree:
 	push	rbp
 	mov		rbp, rsp
+	add		rsp, 10 ; 7 general purpose
+
+	; [rbp + 1] holds the array of tokens
+	; [rbp + 2] holds the index of the current token
+	; [rbp + 3] holds the current token
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], 0
+	mov		[rbp + 3], 0
+
+	mov		rex, 0
+	call	__TokenList_new
+	mov		[rbp + 4], rax
+
+genT00: ; while tokens[i].type != TYPE_UNKNOWN
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	cmp		[rax + 0], 0
+	jit		genT01
+
+	; store current token
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0] 
+
+	; create a new list item
+	mov		rex, [rbp + 3]
+	call	__TokenList_new
 	
+	; append the token
+	mov		rex, [rbp + 4]
+	mov		rfx, rax
+	call	__TokenList_append
+
+	add		[rbp + 2], 1
+	jmp		genT00 ; return to token main loop
+genT01:	
+
+	mov		rex, [rbp + 4]
+	call	__TokenList_print
+
 	mov		rsp, rbp
 	pop		rbp
 	ret	
 
-; ARGUMENTS
-; REX FILE CONTENTS
-; RFX FILE CONTENTS LENGTH
-; RGX FILE NAME
-; RHX FILE OUTPUT NAME
+; ARGS
+;	REX: FILE CONTENTS
+;	RFX: FILE CONTENTS LENGTH
+;	RGX: FILE NAME
+;	RHX: FILE OUTPUT NAME
 start:
 	push	rbp
 	mov		rbp, rsp
+	add		rsp, 6
 	
 	; STACK MAP
 	; FILE CONTENTS				[rbp + 1]
@@ -717,18 +939,25 @@ start:
 	; FILE NAME					[rbp + 3]
 	; FILE OUTPUT NAME			[rbp + 4]
 	; TOKENS					[rbp + 5]
+	; SYNTAX TREE				[rbp + 6]
 
 	mov		[rbp + 1], rex
 	mov		[rbp + 2], rfx
 	mov		[rbp + 3], rgx
 	mov		[rbp + 4], rhx
-
+	
+	; execute the lexer and generate tokens
 	mov		rex, [rbp + 1]
 	mov		rfx, [rbp + 2]
 	mov		rgx, [rbp + 3]
 	mov		rhx, [rbp + 4]
 	call	generateTokens
 	mov		[rbp + 5], rax
+
+	; execute the parser and generate a syntax tree
+	mov		rex, [rbp + 5]
+	call	generateTree
+	mov		[rbp + 6], rax
 
 	mov		rsp, rbp
 	pop		rbp

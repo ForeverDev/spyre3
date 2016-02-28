@@ -1,5 +1,7 @@
-func main() <= real {
-	return 50 + 100;
+func main() => real {
+	if (i == 10) {
+
+	}
 }
 
 

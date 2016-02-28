@@ -1,4 +1,5 @@
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 #include "api.h"
 #include "lib.h"
@@ -18,6 +19,7 @@ void spyL_loadlibs(spy_state* S) {
 
 	spy_pushcfunction(S, "strlen", spyL_str_strlen);
 	spy_pushcfunction(S, "strcpy", spyL_str_strcpy);
+	spy_pushcfunction(S, "strcmp", spyL_str_strcmp);
 
 	spy_pushcfunction(S, "malloc", spyL_mem_malloc);
 	spy_pushcfunction(S, "free", spyL_mem_free);
@@ -49,7 +51,7 @@ void spyL_io_printf(spy_state* S, u8 nargs) {
 						printf("%f", spy_getfloat(S, spy_getarg(S, i++)));
 						break;
 					case 'x':
-						printf("%llx", spy_getint(S, spy_getarg(S, i++)));
+						printf("0x%016llx", spy_getint(S, spy_getarg(S, i++)));
 						break;
 				}
 				break;
@@ -165,6 +167,19 @@ void spyL_str_strcpy(spy_state* S, u8 nargs) {
 	spy_setregister(S, "RAX", 0);
 }
 
+void spyL_str_strcmp(spy_state* S, u8 nargs) {
+	s8* stra = malloc(65536);
+	s8* strb = malloc(65536);
+
+	spy_getstr(S, "REX", stra);
+	spy_getstr(S, "RFX", strb);
+
+	spy_setregister(S, "RAX", (f64)(!strcmp(stra, strb)));
+	
+	// note we do NOT free stra and strb because
+	// they are static and we reuse them
+}
+
 // MEMORY MANAGEMENT LIBRARY
 
 // void* malloc(size);
@@ -172,9 +187,9 @@ void spyL_mem_malloc(spy_state* S, u8 nargs) {
 	u64 head = START_MEMORY;
 	f64 mem;
 	while ((mem = spy_getmem(S, head))) {
-		head += mem;
+		head += (u64)mem;
 	}
-	spy_setmem(S, head, spy_getregister(S, "REX"));
+	spy_setmem(S, head, spy_getregister(S, "REX") + 1);
 	spy_setregister(S, "RAX", head + 1);
 }
 

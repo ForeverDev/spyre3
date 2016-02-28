@@ -46,6 +46,7 @@ OPCODE	| NAME	| VALID MODES
 62	| JMP	| 7
 63	| JIF	| 7
 64	| JIT	| 7
+f0	| DLOG	| 1
 
 File <.spyb> headers
 

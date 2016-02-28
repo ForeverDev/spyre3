@@ -11,6 +11,10 @@
 
 spy_state* spy_newstate() {
 	spy_state* S = malloc(sizeof(spy_state));
+
+	if (!S) {
+		spy_runtimeError(NULL, "Couldn't allocate memory for a spy_state");
+	}
 	
 	memset(S->mem, 0, sizeof(S->mem));
 	memset(S->reg, 0, sizeof(S->reg));
@@ -307,6 +311,36 @@ void spy_run(spy_state* S, const u8* code) {
 					S->reg[IP] = a;
 				}
 				break;
+			case 0xf0:	// DLOG
+				if (mode == 7) {
+					printf("%llu\n", (u64)a);
+				}
+				break;
+		}
+		// for these opcodes, check for seg fault
+		// note only possible modes (4, 5, 6, 8)
+		if (((opcode >= 0x20 && opcode <= 0x2b) || (opcode >= 0x31 && opcode <= 0x33)) && 
+			(mode >= 5 && mode <= 8 && mode != 7)) {
+#define INRANGE(a) (((a) >= START_STACK) && ((a) <= START_MEMORY + SIZE_MEMORY))
+			u8 throw = 0;
+			u64 addr;
+			switch (mode) {
+				case 4:
+					throw = !INRANGE((addr = S->reg[(u64)b] + (u64)c));
+					break;
+				case 5:
+				case 6:
+					throw = !INRANGE((addr = S->reg[(u64)a] + (u64)b));
+					break;
+				case 8:
+					throw = !INRANGE((addr = S->reg[(u64)a] + (u64)b));
+					if (throw) break;
+					throw = !INRANGE((addr = S->reg[(u64)c] + (u64)d));
+					break;
+			}
+			if (throw) { 
+				spy_runtimeError(S, "Segmentation fault (instruction 0x%02x, mode 0x%02x, addr: 0x%08x)", opcode, mode, addr);
+			}
 		}
 	}
 }
@@ -341,6 +375,7 @@ void spy_runtimeError(spy_state* S, const s8* format, ...) {
 	printf("\n");
 
 	va_end(args);
+	exit(1);
 
 }
 

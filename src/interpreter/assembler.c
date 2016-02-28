@@ -49,6 +49,8 @@ const s8* compb_opcodenames[0xff] = {
 	[JMP] = "JMP",
 	[JIF] = "JIF",
 	[JIT] = "JIT",
+
+	[DLOG] = "DLOG"
 };
 
 compb_state* compb_newstate() {
@@ -108,7 +110,8 @@ s32 compb_getOpcode(compb_state* C, const s8* identifier) {
 		if ((			  i <= 0x02) ||
 			(i >= 0x20 && i <= 0x33) ||
 			(i >= 0x40 && i <= 0x41) ||
-			(i >= 0x60 && i <= 0x64)) {
+			(i >= 0x60 && i <= 0x64) ||
+			(i == 0xf0)) {
 			if (!strcmp(compb_opcodenames[i], identifier)) {
 				return i;
 			}
