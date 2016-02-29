@@ -938,7 +938,7 @@ __Chunk_print:
 	push	rbp
 	mov		rbp, rsp
 	add		rsp, 1
-	
+
 	; pointer to the current chunk	
 	mov		[rbp + 1], rex
 Chunk_print00:
@@ -974,6 +974,22 @@ Chunk_print02:
 	mov		rex, [rex + 5]
 	call	__TokenList_print
 Chunk_print03:
+	mov		rax, [rbp + 1]
+	mov		rax, [rax + 6]
+	cmp		[rax + 0], 0
+	jit		Chunk_print04
+	mov		rex, [rbp + 1]
+	mov		rex, [rex + 6]
+	call	__TokenList_print
+Chunk_print04:
+	mov		rax, [rbp + 1]
+	mov		rax, [rax + 7]
+	cmp		[rax + 0], 0
+	jit		Chunk_print05
+	mov		rex, [rbp + 1]
+	mov		rex, [rex + 7]
+	call	__TokenList_print
+Chunk_print05:
 	mov		rex, FORMAT_CHAR
 	mov		rfx, 10
 	push	1
@@ -1337,8 +1353,95 @@ genT06:
 
 	jmp		genT02
 	; --- END OF 'WHILE' PARSING ---
-	; --- ELSE ---
 genT05:
+	; --- ELSE IF 'FOR'
+
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 105
+	jif		genT07
+	
+	; create the chunk to append
+	mov		rex, 6
+	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+
+	; we're on the token 'FOR'
+	; increment by one so that we are on
+	; the first token of the initialization
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; increase the depth counter
+	add		[rbp + 5], 1
+
+	; parse the initialization until a ';'
+	mov		rex, [rbp + 1]
+	lea		rfx, [rbp + 2]
+	mov		rgx, 0
+	mov		rhx, 12
+	call	parseUntil
+
+	; now set general[0]
+	mov		rex, [rbp + 6]
+	mov		rfx, 0
+	mov		rgx, rax
+	call	__Chunk_setGeneralField
+
+	; we're on the semicolon of the initialization
+	; increment by one to get past it
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; we're on the first token of the condition
+	mov		rex, [rbp + 1]
+	lea		rfx, [rbp + 2]
+	mov		rgx, 0
+	mov		rhx, 12
+	call	parseUntil
+
+	; now set general[1]
+	mov		rex, [rbp + 6]
+	mov		rfx, 1
+	mov		rgx, rax
+	call	__Chunk_setGeneralField
+
+	; we're on the semicolon of the coniditon
+	; increment by one to get past it
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; we're at the start of the statement
+	mov		rex, [rbp + 1]
+	lea		rfx, [rbp + 2]
+	mov		rgx, 0
+	mov		rhx, 16
+	call	parseUntil
+
+	; now set general[2]
+	mov		rex, [rbp + 6]
+	mov		rfx, 2
+	mov		rgx, rax
+	call	__Chunk_setGeneralField
+
+	; we're on the '{' increment by one to pass it
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	jmp		genT02
+	
+	; --- END OF FOR PARSING ---
+	; --- ELSE ---
+genT07:
 	mov		rex, 0
 	mov		rfx, [rbp + 5]
 	mov		rgx, [rbp + 10]

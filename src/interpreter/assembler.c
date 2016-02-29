@@ -414,7 +414,7 @@ u8* compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filena
 		}
 		t = t->next;
 	}
-	
+
 	u8* final = malloc(sizeof(bytecode) + sizeof(data_start) + sizeof(code_start) + 1);
 	memset(&final[0], 0, sizeof(final));
 	memcpy(&final[0], &data_start, sizeof(data_start));

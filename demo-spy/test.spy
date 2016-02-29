@@ -1,14 +1,8 @@
 func main(var_one, var_two) {
-	if 1 > 10 {
-		while meme < arrow {
+	for i := 0; i < 10; i = i + 1 {
+		if i == 10 {
 
 		}
-		if swag > money {
-
-		}
-	}
-	while thing > 0 {
-
 	}
 }
 
