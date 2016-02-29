@@ -16,6 +16,7 @@ let FORMAT_STRING		"%s\n"
 let FORMAT_CHAR			"%c\n"
 let FORMAT_NUM			"%d\n"
 let FORMAT_HEX			"%x\n"
+let FORMAT_PTR			"%p\n"
 
 ; file system modes
 let FS_MODE_W			"w"
@@ -182,7 +183,8 @@ __Token_print:
 isalpha:
 	push	rbp
 	mov		rbp, rsp
-
+	
+	; c >= 97 && c <= 122
 	ge		rex, 97
 	jif		C00
 	le		rex, 122
@@ -190,6 +192,12 @@ isalpha:
 	mov		rax, 1
 	jmp		C01
 C00:
+	; || c == '_'
+	cmp		rex, 95
+	jif		C02
+	mov		rax, 1
+	jmp		C01
+C02:
 	mov		rax, 0
 C01:
 	mov		rsp, rbp
@@ -927,6 +935,10 @@ __Chunk_append:
 	; set tail->next to chunk_to_append
 	mov		[rax + 2], [rbp + 2]
 
+	; make sure to set chunk_to_append->next to NULL
+	mov		rax, [rbp + 2]
+	mov		[rax + 2], 0
+
 	mov		rsp, rbp
 	pop		rbp
 	ret
@@ -952,10 +964,27 @@ Chunk_print00:
 	mov		rhx, [rbp + 1]
 	push	4
 	ccall	printf
-
+	
+	mov		rax, [rbp + 1]
+	mov		rax, [rax + 4]
+	cmp		[rax + 0], 0
+	jit		Chunk_print02
 	mov		rex, [rbp + 1]
 	mov		rex, [rex + 4]
 	call	__TokenList_print
+Chunk_print02:
+	mov		rax, [rbp + 1]
+	mov		rax, [rax + 5]
+	cmp		[rax + 0], 0
+	jit		Chunk_print03
+	mov		rex, [rbp + 1]
+	mov		rex, [rex + 5]
+	call	__TokenList_print
+Chunk_print03:
+	mov		rex, FORMAT_CHAR
+	mov		rfx, 10
+	push	1
+	ccall	printf
 
 	mov		rax, [rbp + 1]
 	mov		[rbp + 1], [rax + 2]
@@ -997,7 +1026,7 @@ __Chunk_setGeneralField:
 generateTree:
 	push	rbp
 	mov		rbp, rsp
-	add		rsp, 10 ; 7 general purpose
+	add		rsp, 80 ; [50, 80] general purpose
 
 	; [rbp + 1]		array of tokens
 	; [rbp + 2]		index of current token
@@ -1008,7 +1037,7 @@ generateTree:
 	; [rbp + 7]		general0
 	; [rbp + 8]		general1
 	; [rbp + 9]		general2
-	; [rbp + 10]	general3
+	; [rbp + 10]	last chunk
 
 	mov		[rbp + 1], rex
 	mov		[rbp + 2], 0
@@ -1063,7 +1092,7 @@ genT00: ; while tokens[i].type != TYPE_UNKNOWN
 	call	__TokenList_new
 	mov		[rbp + 7], rax
 
-	; function return type TokenList
+	; function arguments TokenList
 	mov		rex, 0
 	call	__TokenList_new
 	mov		[rbp + 8], rax
@@ -1080,17 +1109,52 @@ genT00: ; while tokens[i].type != TYPE_UNKNOWN
 	mov		rex, [rbp + 7]
 	mov		rfx, rax
 	call	__TokenList_append
-	mov		rex, [rbp + 4]
+	mov		rex, [rbp + 6]
 	mov		rfx, 0
 	mov		rgx, [rbp + 7]
 	call	__Chunk_setGeneralField
 
 	; increment the token pointer to the first argument
 	; note that we increment by two to skip over the '('
+	add		[rbp + 2], 2
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+genT00_00: ; while (token != ')') (gather all arguments)
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 15
+	jit		genT00_01
+
+	; append the argument to general[2]
+	mov		rex, [rbp + 3]
+	call	__TokenList_new
+	mov		rex, [rbp + 8]
+	mov		rfx, rax
+	call	__TokenList_append
+	
+	; increment pointer by 1
+	; if it's a comma, skip and jump back up to the loop
+	; else fall through	
 	add		[rbp + 2], 1
 	mov		rax, [rbp + 1]
 	add		rax, [rbp + 2]
 	mov		[rbp + 3], [rax + 0]
+
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 23
+	jif		genT00_01
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+	jmp		genT00_00
+genT00_01:
+	
+	; store the arguments list
+	mov		rex, [rbp + 6]
+	mov		rfx, 1
+	mov		rgx, [rbp + 8]
+	call	__Chunk_setGeneralField
 
 	jmp		genT02
 	; --- ELSE: STILL HAVEN'T MATCHED A TOKEN ---
@@ -1099,11 +1163,13 @@ genT03: ; else
 	mov		rfx, [rbp + 5]
 	call	__Chunk_new
 	mov		[rbp + 6], rax
+
 	jmp		genT02
 genT02: ; done, append to head chunk
 	mov		rex, [rbp + 4]
 	mov		rfx, [rbp + 6]
 	call	__Chunk_append
+	mov		[rbp + 10], [rbp + 6]
 genT04: ; skip, don't append
 	add		[rbp + 2], 1
 	jmp		genT00 ; return to token main loop

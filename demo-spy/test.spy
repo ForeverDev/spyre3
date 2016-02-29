@@ -1,7 +1,5 @@
-func main() => real {
-	if (i == 10) {
+func main(var_one, var_two) {
 
-	}
 }
 
 
