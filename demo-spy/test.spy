@@ -1,7 +1,7 @@
-func main(var_one, var_two) {
+func main() {
+	
+	label test;
 
-	return meme * var_one;
+	goto test;
 
 }
-
-

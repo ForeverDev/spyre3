@@ -16,10 +16,12 @@ void spyL_loadlibs(spy_state* S) {
 	spy_pushcfunction(S, "fputstr", spyL_io_fputstr);
 	spy_pushcfunction(S, "fputchar", spyL_io_fputchar);
 	spy_pushcfunction(S, "fputnum", spyL_io_fputnum);
+	spy_pushcfunction(S, "fprintf", spyL_io_fprintf);
 
 	spy_pushcfunction(S, "strlen", spyL_str_strlen);
 	spy_pushcfunction(S, "strcpy", spyL_str_strcpy);
 	spy_pushcfunction(S, "strcmp", spyL_str_strcmp);
+	spy_pushcfunction(S, "sprintf", spyL_str_sprintf);
 
 	spy_pushcfunction(S, "malloc", spyL_mem_malloc);
 	spy_pushcfunction(S, "free", spyL_mem_free);
@@ -29,10 +31,8 @@ void spyL_loadlibs(spy_state* S) {
 
 // void println(format, ...);
 void spyL_io_printf(spy_state* S, u8 nargs) {
-	static s8 printfmt[1024];
-	static s8 genbuf[1024];
-	s8* pf = printfmt;
-	spy_getstr(S, "REX", printfmt);
+	s8* pf = S->gen0; 
+	spy_getstr(S, "REX", S->gen0);
 	u8 i = 1;
 	while (*pf) {
 		switch (*pf++) {
@@ -42,7 +42,7 @@ void spyL_io_printf(spy_state* S, u8 nargs) {
 						printf("%c", spy_getchar(S, spy_getarg(S, i++)));
 						break;
 					case 's':
-						printf("%s", spy_getstr(S, spy_getarg(S, i++), genbuf));
+						printf("%s", spy_getstr(S, spy_getarg(S, i++), S->gen1));
 						break;
 					case 'd':
 						printf("%lld", spy_getint(S, spy_getarg(S, i++)));
@@ -74,10 +74,9 @@ void spyL_io_getchar(spy_state* S, u8 nargs) {
 
 // ptr getstr();
 void spyL_io_getstr(spy_state* S, u8 nargs) {
-	s8 buf[1024];
-	s8* bp = buf;
+	s8* bp = S->gen0;
 	fgets(buf, 1024, stdin);
-	u32 len = strlen(buf);
+	u32 len = strlen(S->gen0);
 	buf[len] = 0;
 	for (u32 i = len - 1; i > 0; i--) {
 		buf[i] = buf[i - 1];
@@ -112,7 +111,21 @@ void spyL_io_fclose(spy_state* S, u8 nargs) {
 }
 
 void spyL_io_fprintf(spy_state* S, u8 nargs) {
-	// TODO
+	// here we use a little trick with sprintf
+	// if we pass a NULL pointer to the destination (REX)
+	// sprintf will not write the string.  however, the
+	// string will be in the general purpose buffer S->gen2
+
+	// save the file argument
+	void* file = spy_getcptr(S, "REX");
+	
+	spy_setregister(S, "REX", 0);
+	spyL_io_sprintf(S, nargs);
+
+	// the string to write is now in S->gen2
+	fwrite(S->gen2, 1, strlen(S->gen2), file);
+
+	spy_setregister(S, "RAX", 0);
 }
 
 void spyL_io_fputstr(spy_state* S, u8 nargs) {
@@ -171,16 +184,59 @@ void spyL_str_strcpy(spy_state* S, u8 nargs) {
 }
 
 void spyL_str_strcmp(spy_state* S, u8 nargs) {
-	s8* stra = malloc(65536);
-	s8* strb = malloc(65536);
 
-	spy_getstr(S, "REX", stra);
-	spy_getstr(S, "RFX", strb);
+	spy_getstr(S, "REX", S->gen0);
+	spy_getstr(S, "RFX", S->gen1);
 
-	spy_setregister(S, "RAX", (f64)(!strcmp(stra, strb)));
+	spy_setregister(S, "RAX", (f64)(!strcmp(S->gen0, S->gen1)));
 	
 	// note we do NOT free stra and strb because
 	// they are static and we reuse them
+}
+
+void spyL_str_sprintf(spy_state* S, u8 nargs) {
+	s8* pf = S->gen0; 
+	s8* bp = S->gen2
+	u64 addr = spy_getint(S, "REX");
+	spy_getstr(S, "RFX", S->gen0);
+	u8 i = 2;
+	while (*pf) {
+		switch (*pf++) {
+			case '%': {
+				switch (*pf++) {
+					case 'c':
+						bp += sprintf(bp, "%c", spy_getchar(S, spy_getarg(S, i++)));
+						break;
+					case 's':
+						bp += sprintf(bp, "%s", spy_getstr(S, spy_getarg(S, i++), S->gen1));
+						break;
+					case 'd':
+						bp += sprintf(bp, "%lld", spy_getint(S, spy_getarg(S, i++)));
+						break;
+					case 'f':
+						bp += sprintf(bp, "%f", spy_getfloat(S, spy_getarg(S, i++)));
+						break;
+					case 'x':
+						bp += sprintf(bp, "%llx", spy_getint(S, spy_getarg(S, i++)));
+						break;
+					case 'p':
+						bp += sprintf(bp, "0x%08llx", spy_getint(S, spy_getarg(S, i++)));
+						break;
+				}
+				break;
+			}
+			default:
+				bp += sprintf(bp, "%c", *(pf - 1));
+				break;
+		}
+	}
+	*bp++ = 0;
+	if (addr) {
+		for (u64 i = 0; i < strlen(S->gen2); i++) {
+			spy_setmem(S, addr + i, S->gen2[i]);	
+		}
+	}
+	spy_setregister(S, "RAX", 0);
 }
 
 // MEMORY MANAGEMENT LIBRARY

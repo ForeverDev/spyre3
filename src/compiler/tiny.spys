@@ -38,6 +38,8 @@ let TOK_KW_FOR			"for"
 let TOK_KW_BREAK		"break"
 let TOK_KW_CONTINUE		"continue"
 let TOK_KW_RETURN		"return"
+let TOK_KW_GOTO			"goto"
+let TOK_KW_LABEL		"label"
 
 ; chunk variables
 let	CHUNK_DEBUG			"CHUNK:\n\tTYPE: %d\n\tDEPTH: %d\n\tADDR: %p\n\tNEXT: %p\n\tLAST: %p\n"
@@ -415,8 +417,24 @@ L06_07:
 	push	2
 	ccall	strcmp
 	cmp		rax, 1
-	jif		L06_else
+	jif		L06_08
 	mov		[rbp + 9], 108
+	jmp		L06_00
+L06_08:
+	mov		rfx, TOK_KW_GOTO		; check 'goto'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_09
+	mov		[rbp + 9], 109
+	jmp		L06_00
+L06_09:
+	mov		rfx, TOK_KW_LABEL		; check 'label'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_else
+	mov		[rbp + 9], 110
 	jmp		L06_00
 L06_else:
 	mov		[rbp + 9], 1
@@ -1453,7 +1471,7 @@ genT05:
 	jmp		genT02
 	
 	; --- END OF FOR PARSING ---
-	; --- ELSE ---
+	; --- ELSE IF 'RETURN' ---
 genT07:
 	
 	mov		rax, [rbp + 3]
@@ -1489,7 +1507,130 @@ genT07:
 	
 	jmp		genT02
 	
+	; --- END OF RETURN PARSING ---
+	; --- ELSE IF 'CONTINUE' ---
 genT08:
+	
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 107
+	jif		genT09
+
+	mov		rex, 8
+	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+
+	; we're on the token 'CONTINUE'
+	; increment to skip over the semicolon
+	add		[rbp + 2], 2
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	jmp		genT02
+	; --- END CONTINUE PARSING ---
+	; --- ELSE IF BREAK ---
+genT09:
+	
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 106
+	jif		genT10
+
+	mov		rex, 9
+	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+
+	; we're on the token 'BREAK'
+	; increment to skip over the semicolon
+	add		[rbp + 2], 2
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	jmp		genT02
+	
+	; --- END BREAK PARSING ---
+	; --- ELSE IF GOTO ---
+genT10:
+	
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 109
+	jif		genT11
+
+	mov		rex, 10
+	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+
+	; we're on the token 'GOTO'
+	; increment and assign the identifier
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; now we're on the identifier
+	mov		rex, [rbp + 3]
+	call	__TokenList_new
+
+	mov		rex, [rbp + 6]
+	mov		rfx, 0
+	mov		rgx, rax
+	call	__Chunk_setGeneralField
+
+	; still on the identifier, increment
+	; to skip over the semicolon
+	add		[rbp + 2], 2
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	jmp		genT02
+	
+	; --- END OF 'GOTO' PARSING ---
+	; --- ELSE IF LABEL ---
+genT11:
+	
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 110
+	jif		genT12
+
+	mov		rex, 11
+	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+
+	; we're on the token 'LABEL'
+	; increment and assign the identifier
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; now we're on the identifier
+	mov		rex, [rbp + 3]
+	call	__TokenList_new
+
+	mov		rex, [rbp + 6]
+	mov		rfx, 0
+	mov		rgx, rax
+	call	__Chunk_setGeneralField
+
+	; still on the identifier, increment
+	; to skip over the semicolon
+	add		[rbp + 2], 2
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	jmp		genT02
+
+genT12:
 	mov		rex, 0
 	mov		rfx, [rbp + 5]
 	mov		rgx, [rbp + 10]

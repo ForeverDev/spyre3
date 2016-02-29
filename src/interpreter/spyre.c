@@ -7,8 +7,6 @@
 #include "spyre.h"
 #include "assembler.h"
 
-// TODO FIX MEMORY CORRUPTION IN ROM
-
 spy_state* spy_newstate() {
 	spy_state* S = malloc(sizeof(spy_state));
 
@@ -22,6 +20,15 @@ spy_state* spy_newstate() {
 	S->reg[BP] = START_STACK;
 	S->flags = 0x00;
 	S->nfuncs = 0;
+
+	S->gen0 = malloc(65536);
+	S->gen1 = malloc(65536);
+	S->gen2 = malloc(65536);
+	S->gen3 = malloc(65536);
+
+	if (!(S->gen0 && S->gen1 && S->gen2 && S->gen3)) {
+		spy_runtimeError(S, "Couldn't allocate memory for string buffers");
+	}
 
 	return S;
 }

@@ -26,6 +26,10 @@ typedef struct spy_state {
 	u8				flags;
 	u8				nfuncs;
 	spy_cfunc 		cfuncs[128];
+	s8*				gen0;
+	s8*				gen1;
+	s8*				gen2;
+	s8*				gen3;
 
 } spy_state;
 
