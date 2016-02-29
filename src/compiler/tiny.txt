@@ -28,6 +28,7 @@ NEWLINE			25
 LE				25
 GE				26
 CMP				27
+ASSIGN			28
 FUNC			101
 IF				102
 WHILE			103
@@ -46,6 +47,7 @@ FUNC			03
 IF				04
 WHILE			05
 FOR				06
+RETURN			07
 
 
 struct Token {

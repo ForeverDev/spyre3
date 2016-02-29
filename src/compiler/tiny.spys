@@ -540,6 +540,19 @@ L20:
 L21:
 	cmp		[rbp + 6], 58 ; case :
 	jif		L22
+	; check if :=
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 5]
+	add		rax, 1
+	cmp		[rax + 0], 61
+	jif		L21_
+	; is :=, rewrite word
+	mov		[rbp + 52], 61 
+	mov		[rbp + 53], 0
+	mov		[rbp + 9], 28
+	add		[rbp + 5], 1
+	jmp		L12
+L21_:
 	mov		[rbp + 9], 13
 	jmp		L12
 L22:
@@ -1442,6 +1455,41 @@ genT05:
 	; --- END OF FOR PARSING ---
 	; --- ELSE ---
 genT07:
+	
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 108
+	jif		genT08
+
+	mov		rex, 7
+	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+
+	; we're on the token 'RETURN'
+	; increment by one so that we are on
+	; the first token of the statement
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; parse the statement until a ';'
+	mov		rex, [rbp + 1]
+	lea		rfx, [rbp + 2]
+	mov		rgx, 0
+	mov		rhx, 12
+	call	parseUntil
+
+	; now set general[0]
+	mov		rex, [rbp + 6]
+	mov		rfx, 0
+	mov		rgx, rax
+	call	__Chunk_setGeneralField
+	
+	jmp		genT02
+	
+genT08:
 	mov		rex, 0
 	mov		rfx, [rbp + 5]
 	mov		rgx, [rbp + 10]
