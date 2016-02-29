@@ -40,7 +40,7 @@ let TOK_KW_CONTINUE		"continue"
 let TOK_KW_RETURN		"return"
 
 ; chunk variables
-let	CHUNK_DEBUG			"CHUNK:\n\tTYPE: %d\n\tRELATION: %d\n\tADDR: %p\n"
+let	CHUNK_DEBUG			"CHUNK:\n\tTYPE: %d\n\tDEPTH: %d\n\tADDR: %p\n\tNEXT: %p\n\tLAST: %p\n"
 
 ; registers
 let REG_RIP				"RIP"
@@ -135,8 +135,7 @@ __Token_new:
 	mov		[rax + 0], [rbp + 1]
 	
 	; move the word in
-	mov		rex, rax
-	add		rex, 1
+	lea		rex, [rax + 1]
 	mov		rfx, [rbp + 2]
 	push	rax
 	push	2
@@ -340,8 +339,7 @@ L05: ; START IDENTIFIER LOOP
 	jif		L06
 
 	; we've made sure the character is alpha, now append it to the buffer
-	mov		rax, rbp
-	add		rax, 51
+	lea		rax, [rbp + 51]
 	add		rax, [rbp + 7]
 	mov		[rax + 0], [rbp + 6]
 
@@ -352,13 +350,11 @@ L06: ; END IDENTIFIER LOOP
 	; decrease FILE_COUNTER by 1
 	sub		[rbp + 5], 1
 	; null terminate the buffer
-	mov		rax, rbp
-	add		rax, 51
+	lea		rax, [rbp + 51]
 	add		rax, [rbp + 7]
 	mov		[rax + 0], 0
 	
-	mov		rex, rbp
-	add		rex, 51
+	lea		rex, [rbp + 51]	
 	mov		rfx, TOK_KW_FUNC		; check 'func'
 	push	2
 	ccall	strcmp
@@ -426,8 +422,7 @@ L06_else:
 	mov		[rbp + 9], 1
 L06_00:
 	mov		rex, [rbp + 9]
-	mov		rfx, rbp
-	add		rfx, 51
+	lea		rfx, [rbp + 51]
 	call	__Token_new
 	mov		[rbp + 8], rax
 	jmp		L02 
@@ -460,8 +455,7 @@ L10: ; START NUMBER LOOP
 	jif		L11
 	
 	; now we've made sure the next character is a digit, we can now append it to the buffer
-	mov		rax, rbp
-	add		rax, 51
+	lea		rax, [rbp + 51]
 	add		rax, [rbp + 7]
 	mov		[rax + 0], [rbp + 6]
 	
@@ -475,15 +469,13 @@ L11: ; END NUMBER LOOP
 	; decrease FILE_COUNTER by 1
 	sub		[rbp + 5], 1
 	; null terminate the buffer
-	mov		rax, rbp
-	add		rax, 51
+	lea		rax, [rbp + 51]
 	add		rax, [rbp + 7]
 	mov		[rax + 0], 0
 
 	; create a new token
 	mov		rex, 3
-	mov		rfx, rbp
-	add		rfx, 51
+	lea		rfx, [rbp + 51]
 	call	__Token_new
 	mov		[rbp + 8], rax
 
@@ -665,8 +657,7 @@ L12:
 L02: ; LEX LOOP INCREMENT FILE_COUNTER
 	; the token we created is in [rbp + 8]
 	; append it to the token array
-	mov		rax, rbp
-	add		rax, 563
+	lea		rax, [rbp + 563]
 	add		rax, [rbp + 562]
 	mov		[rax + 0], [rbp + 8]
 	; now increase the token pointer
@@ -683,15 +674,13 @@ L01: ; END LEX LOOP
 	mov		rfx, TOK_EOF
 	call	__Token_new
 	mov		[rbp + 8], rax
-	mov		rax, rbp
-	add		rax, 563
+	lea		rax, [rbp + 563]
 	add		rax, [rbp + 562]
 	mov		[rax + 0], [rbp + 8]
 	add		[rbp + 562], 1
 
 	; return a pointer to the tokens
-	mov		rax, rbp
-	add		rax, 563
+	lea		rax, [rbp + 563]
 	
 	mov		rsp, rbp
 	pop		rbp	
@@ -962,7 +951,11 @@ Chunk_print00:
 	mov		rgx, [rbp + 1]
 	mov		rgx, [rgx + 1]
 	mov		rhx, [rbp + 1]
-	push	4
+	mov		rix, [rbp + 1]
+	mov		rix, [rix + 2]
+	mov		rjx, [rbp + 1]
+	mov		rjx, [rjx + 3]
+	push	6
 	ccall	printf
 	
 	mov		rax, [rbp + 1]
@@ -1020,6 +1013,84 @@ __Chunk_setGeneralField:
 	pop		rbp
 	ret	
 
+; ARGS
+;	REX: array of tokens
+;	RFX: POINTER to current index (so that we can increment it as we go)
+;	RGX: incrementer
+;	RHX: decrementer
+; RETURNS
+;	a new token list containing the tokens up to and NOT 
+;	including the token type specified in RGX
+parseUntil:
+	push	rbp
+	push	rbx
+	mov		rbp, rsp
+	add		rsp, 7
+	
+	; load arguments	
+	mov		[rbp + 1], rex	; array of tokens
+	mov		[rbp + 2], rfx	; current index of token (IS A POINTER)
+	mov		[rbp + 3], rgx	; incrementer
+	mov		[rbp + 4], rhx	; decrementer
+
+	; create a new TokenList, this what we will append
+	; to and what we will return
+	mov		rex, 0
+	call	__TokenList_new
+	mov		[rbp + 5], rax
+
+	; this is the counter that tells us when to exit the loop
+	mov		[rbp + 6], 1
+
+parseUntil00:
+	; get the index
+	mov		rax, [rbp + 2]
+	mov		rax, [rax + 0]
+
+	; get the type of token, save in [rbp + 7]
+	mov		rbx, [rbp + 1]
+	add		rbx, rax
+	mov		rbx, [rbx + 0]
+	mov		[rbp + 7], [rbx + 0]
+
+	; check incrementer
+	cmp		[rbp + 3], 0
+	jit		parseUntil02
+
+	cmp		[rbp + 7], [rbp + 3]
+	jif		parseUntil02
+	add		[rbp + 6], 1
+	jmp		parseUntil03
+parseUntil02:
+	; check decrementer
+	cmp		[rbp + 7], [rbp + 4]
+	jif		parseUntil03
+	sub		[rbp + 6], 1
+parseUntil03:
+
+	cmp		[rbp + 6], 0
+	jit		parseUntil01	
+	; create a TokenList to append to the main once
+	mov		rex, [rbp + 1]
+	mov		rax, [rbp + 2]
+	add		rex, [rax + 0]
+	mov		rex, [rex + 0]
+	call	__TokenList_new
+	mov		rex, [rbp + 5]
+	mov		rfx, rax
+	call	__TokenList_append
+	
+	mov		rax, [rbp + 2]
+	add		[rax + 0], 1
+	
+	jmp		parseUntil00
+parseUntil01:	
+	mov		rax, [rbp + 5]
+
+	mov		rsp, rbp
+	pop		rbx
+	pop		rbp
+	ret
 
 ; ARGS
 ;	REX: array of tokens
@@ -1047,8 +1118,12 @@ generateTree:
 	; move it into [rbp + 4]
 	mov		rex, 1
 	mov		rfx, 0
+	mov		rgx, 0
 	call	__Chunk_new
 	mov		[rbp + 4], rax
+	
+	; also move the chunk into [rbp + 10]
+	mov		[rbp + 10], rax
 
 	; the current tree depth, stored in [rbp + 5]
 	mov		[rbp + 5], 0
@@ -1072,6 +1147,13 @@ genT00: ; while tokens[i].type != TYPE_UNKNOWN
 	cmp		[rax + 0], 25
 	jit		genT04				; skip if newline
 	
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 17		; skip and decrement depth if '}'
+	jif		genT00_99
+	sub		[rbp + 5], 1
+	jmp		genT04
+genT00_99:
+	
 	; --- CHECK FUNC TOKEN ---
 	mov		rax, [rbp + 3]
 	cmp		[rax + 0], 101
@@ -1084,6 +1166,7 @@ genT00: ; while tokens[i].type != TYPE_UNKNOWN
 	; create a chunk to hold the function
 	mov		rex, 3
 	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
 	call	__Chunk_new
 	mov		[rbp + 6], rax
 	
@@ -1134,7 +1217,7 @@ genT00_00: ; while (token != ')') (gather all arguments)
 	
 	; increment pointer by 1
 	; if it's a comma, skip and jump back up to the loop
-	; else fall through	
+	; else jump to end
 	add		[rbp + 2], 1
 	mov		rax, [rbp + 1]
 	add		rax, [rbp + 2]
@@ -1156,11 +1239,109 @@ genT00_01:
 	mov		rgx, [rbp + 8]
 	call	__Chunk_setGeneralField
 
+	; we're currently on the closing ')' of the function arguments list
+	; increment by two to land on the first token in the function
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+	
+	; also increment the depth counter by once because we're going into a function
+	add		[rbp + 5], 1
+
 	jmp		genT02
-	; --- ELSE: STILL HAVEN'T MATCHED A TOKEN ---
-genT03: ; else
+	; --- END OF 'FUNC' PARSING ---
+	; --- ELSE IF 'IF' ---
+genT03:
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 102
+	jif		genT06	
+	
+	mov		rex, 4
+	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+	
+	; we're currently on the token 'if'
+	; move ahead one so that we land on the
+	; first token of the condition
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; increase the depth counter
+	add		[rbp + 5], 1
+	
+	; parse the entire condition, stopping on the '{'
+	mov		rex, [rbp + 1]
+	lea		rfx, [rbp + 2]
+	mov		rgx, 0
+	mov		rhx, 16
+	call	parseUntil
+	
+	mov		rex, [rbp + 6]
+	mov		rfx, 0
+	mov		rgx, rax
+	call	__Chunk_setGeneralField
+
+	; move the token pointer up one more, getting infront of the '{'
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	jmp		genT02
+	; --- END OF 'IF' PARSING ---
+	; --- ELSE IF 'WHILE' ---
+genT06: 
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 103
+	jif		genT05	
+	
+	mov		rex, 5
+	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+	
+	; we're currently on the token 'while'
+	; move ahead one so that we land on the
+	; first token of the condition
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; increase the depth counter
+	add		[rbp + 5], 1
+	
+	; parse the entire condition, stopping on the '{'
+	mov		rex, [rbp + 1]
+	lea		rfx, [rbp + 2]
+	mov		rgx, 0
+	mov		rhx, 16
+	call	parseUntil
+	
+	mov		rex, [rbp + 6]
+	mov		rfx, 0
+	mov		rgx, rax
+	call	__Chunk_setGeneralField
+
+	; move the token pointer up one more, getting infront of the '{'
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	jmp		genT02
+	; --- END OF 'WHILE' PARSING ---
+	; --- ELSE ---
+genT05:
 	mov		rex, 0
 	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
 	call	__Chunk_new
 	mov		[rbp + 6], rax
 

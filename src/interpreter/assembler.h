@@ -37,6 +37,7 @@ typedef enum compb_opcodes {
 	LAND	= 0x31,
 	LOR		= 0x32,
 	LNOT	= 0x33,
+	LEA		= 0x34,
 
 	PUSH	= 0x40,
 	POP		= 0x41,

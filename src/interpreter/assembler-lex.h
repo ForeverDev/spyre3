@@ -31,7 +31,7 @@ typedef enum lexb_token_type {
 typedef struct lexb_token {
 	
 	lexb_token_type		type;
-	s8					word[64];
+	s8					word[1024];
 	struct lexb_token*	next;			
 
 } lexb_token;

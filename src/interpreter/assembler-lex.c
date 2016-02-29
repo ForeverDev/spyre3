@@ -32,7 +32,7 @@ void lexb_pushtoken(lexb_state* L, lexb_token_type t, const s8* word) {
 	token->type = t;
 	token->next = NULL;
 	strcpy(token->word, word);
-	
+
 	if (!L->head) {
 		L->head = token;
 		return;

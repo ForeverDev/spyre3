@@ -5,8 +5,6 @@
 #include "spyre.h"
 #include "assembler.h"
 
-#undef WAS_INIT_INSTRUCTIONS
-
 const s8* compb_registers[13] = {
 	"RIP", "RSP", "RBP",
 	"RAX", "RBX", "RCX",
@@ -40,6 +38,7 @@ const s8* compb_opcodenames[0xff] = {
 	[LAND] = "LAND",
 	[LOR] = "LOR",
 	[LNOT] = "LNOT",
+	[LEA] = "LEA",
 
 	[PUSH] = "PUSH",
 	[POP] = "POP",
@@ -108,7 +107,7 @@ s32 compb_getOpcode(compb_state* C, const s8* identifier) {
 	for (u32 i = 0; i < 0xff; i++) {
 		// check if i is a valid opcode
 		if ((			  i <= 0x02) ||
-			(i >= 0x20 && i <= 0x33) ||
+			(i >= 0x20 && i <= 0x34) ||
 			(i >= 0x40 && i <= 0x41) ||
 			(i >= 0x60 && i <= 0x64) ||
 			(i == 0xf0)) {
@@ -224,7 +223,7 @@ u8* compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filena
 		} else if (!strncmp(t->word, "LET", 3)) {
 			s8* identifier;
 			s8* wptr;
-			s8 word[64];
+			s8 word[1024];
 			s8* writeword = word;
 			u32 value;
 			t = t->next;

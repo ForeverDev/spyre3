@@ -39,6 +39,7 @@ OPCODE	| NAME	| VALID MODES
 31	| LAND	| 2 3 4 5 6 8
 32	| LOR	| 2 3 4 5 6 8
 33	| LNOT	| 2 3 4 5 6 8
+34	| LEA	| 4 8
 40	| PUSH	| 1 7
 41	| POP 	| 0 1
 60	| CALL	| 7 

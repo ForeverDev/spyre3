@@ -245,6 +245,16 @@ void spy_run(spy_state* S, const u8* code) {
 			case 0x32:	// LOR
 			case 0x33:	// LNOT
 				break;
+			case 0x34:	// LEA
+				switch (mode) {
+					case 4:
+						S->reg[(u64)a] = S->reg[(u64)b] + (u64)c;
+						break;
+					case 8:
+						S->mem[(u64)S->reg[(u64)a] + (u64)b] = S->reg[(u64)c] + (u64)d;
+						break;
+				}
+				break;
 			case 0x40: 	// PUSH
 				switch (mode) {
 					case 1:
