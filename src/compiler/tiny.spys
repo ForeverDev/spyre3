@@ -38,6 +38,8 @@ let TOK_KW_BREAK		"break"
 let TOK_KW_CONTINUE		"continue"
 let TOK_KW_RETURN		"return"
 
+; chunk variables
+let	CHUNK_DEBUG			"CHUNK:\n\tTYPE: %d\n\tRELATION: %d\n\tADDR: %p\n"
 
 ; registers
 let REG_RIP				"RIP"
@@ -349,7 +351,7 @@ L06: ; END IDENTIFIER LOOP
 	
 	mov		rex, rbp
 	add		rex, 51
-	mov		rfx, TOK_KW_FUNC	; check 'func'
+	mov		rfx, TOK_KW_FUNC		; check 'func'
 	push	2
 	ccall	strcmp
 	cmp		rax, 1
@@ -357,12 +359,60 @@ L06: ; END IDENTIFIER LOOP
 	mov		[rbp + 9], 101
 	jmp		L06_00
 L06_01:	
-	mov		rfx, TOK_KW_IF		; check 'if'
+	mov		rfx, TOK_KW_IF			; check 'if'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_02
+	mov		[rbp + 9], 102
+	jmp		L06_00
+L06_02:	
+	mov		rfx, TOK_KW_WHILE		; check 'while'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_03
+	mov		[rbp + 9], 103
+	jmp		L06_00
+L06_03:
+	mov		rfx, TOK_KW_DO			; check 'while'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_04
+	mov		[rbp + 9], 104
+	jmp		L06_00
+L06_04:
+	mov		rfx, TOK_KW_FOR			; check 'for'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_05
+	mov		[rbp + 9], 105
+	jmp		L06_00
+L06_05:
+	mov		rfx, TOK_KW_BREAK		; check 'break'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_06
+	mov		[rbp + 9], 106
+	jmp		L06_00
+L06_06:
+	mov		rfx, TOK_KW_CONTINUE	; check 'continue'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_07
+	mov		[rbp + 9], 107
+	jmp		L06_00
+L06_07:
+	mov		rfx, TOK_KW_RETURN		; check 'continue'
 	push	2
 	ccall	strcmp
 	cmp		rax, 1
 	jif		L06_else
-	mov		[rbp + 9], 102
+	mov		[rbp + 9], 108
 	jmp		L06_00
 L06_else:
 	mov		[rbp + 9], 1
@@ -605,7 +655,6 @@ L12:
 	jmp		L02
 
 L02: ; LEX LOOP INCREMENT FILE_COUNTER
-
 	; the token we created is in [rbp + 8]
 	; append it to the token array
 	mov		rax, rbp
@@ -621,7 +670,6 @@ L08: ; JUMP HERE TO SKIP
 	add		[rbp + 5], 1
 	jmp		L00
 L01: ; END LEX LOOP
-
 	; add a null token
 	mov		rex, 0
 	mov		rfx, TOK_EOF
@@ -642,31 +690,6 @@ L01: ; END LEX LOOP
 	ret
 
 ; --------------- START PARSER ---------------
-
-; ARGS
-;	REX: type
-;	RFX: relation
-;	RGX: token_list0
-;	RHX: token_list1
-;	RIX: token_list2
-;	RJX: token_list3
-__Chunk_new:
-	push	rbp
-	mov		rbp, rsp
-
-	mov		rsp, rbp
-	pop		rbp
-	ret
-
-; ARGS
-;	REX: chunk
-__Chunk_print:
-	push	rbp
-	mov		rbp, rsp
-
-	mov		rsp, rbp
-	pop		rbp
-	ret	
 
 ; ARGS
 ;	REX token
@@ -715,7 +738,6 @@ getTail00:
 
 	jmp		getTail00
 getTail01:
-	
 	mov		rax, [rbp + 1]
 	mov		rsp, rbp
 	pop		rbp
@@ -748,19 +770,16 @@ append00:
 	mov		[rbx + 1], 0
 	jmp		append02
 append01:
-
 	; set to_append->next to null
 	mov		rax, [rbp + 2]
 	mov		[rax + 1], 0
 
 	; get the tail of the TokenList to append to
 	mov		rex, [rbp + 1]
-	; TODO FIX SEG FAULT IN __TOKENLIST_GETTAIL!!!!!
 	call	__TokenList_getTail
 	; now set TokenList->tail->next to the TokenList we just created
 	mov		[rax + 1], [rbp + 2]
 append02:
-
 	mov		rsp, rbp
 	pop		rbx
 	pop		rbp
@@ -805,7 +824,6 @@ print02:
 
 	jmp		print00
 print01:
-
 	mov		rsp, rbp
 	pop		rbp
 	ret
@@ -816,8 +834,9 @@ print01:
 ;	RGX: pointer to last
 __Chunk_new:
 	push	rbp
+	push	rbx
 	mov		rbp, rsp
-	add		rsp, 4
+	add		rsp, 5
 
 	; [rbp + 1] type
 	; [rbp + 2] relation
@@ -833,17 +852,116 @@ __Chunk_new:
 	mov		[rbp + 4], rax ; [rbp + 4] chunk
 
 	mov		rax, [rbp + 4]
-	mov		[rax + 0], [rbp + 1] ; set chunk->type
-	mov		[rax + 1], [rbp + 2] ; set chunk->relation
-	mov		[rax + 3], [rbp + 3] ; set chubk->last
+	mov		[rax + 0], [rbp + 1]	; set chunk->type
+	mov		[rax + 1], [rbp + 2]	; set chunk->relation
+	mov		[rax + 2], 0			; set chunk->next	
+	mov		[rax + 3], [rbp + 3]	; set chubk->last
 
 	; initialize general lists to NULL
-	mov		[rax + 4], 0
-	mov		[rax + 5], 0
-	mov		[rax + 6], 0
-	mov		[rax + 7], 0
+	; [rbp + 5] is loop counter
+	mov		[rbp + 5], 0
+Chunknew00:
+	lt		[rbp + 5], 4
+	jif		Chunknew01
 	
+	; create a new general list
+	mov		rex, 0
+	call	__TokenList_new
+
+	; move it into the proper field
+	mov		rbx, [rbp + 4]
+	add		rbx, 4
+	add		rbx, [rbp + 5]
+	mov		[rbx + 0], rax
+
+	add		[rbp + 5], 1
+	jmp		Chunknew00
+Chunknew01:	
 	mov		rax, [rbp + 4]
+	mov		rsp, rbp
+	pop		rbx
+	pop		rbp
+	ret
+
+; ARGS
+;	REX: chunk
+__Chunk_getTail:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 1
+	
+	; this is the current chunk we're at
+	mov		[rbp + 1], rex	
+Chunk_getTail00:
+	; check if chunk->next is NULL
+	mov		rax, [rbp + 1]
+	cmp		[rax + 2], 0
+	jit		Chunk_getTail01
+	
+	mov		rax, [rbp + 1]
+	mov		[rbp + 1], [rax + 2]
+
+	jmp		Chunk_getTail00
+Chunk_getTail01:
+	; return the tail
+	mov		rax, [rbp + 1]
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+; ARGS
+;	REX: chunk
+;	RFX: chunk to append
+__Chunk_append:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 2
+	
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], rfx
+
+	; get the tail of the chunk we want to append to
+	mov		rex, [rbp + 1]
+	call	__Chunk_getTail
+	
+	; set tail->next to chunk_to_append
+	mov		[rax + 2], [rbp + 2]
+
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+; ARGS
+;	REX: chunk
+__Chunk_print:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 1
+	
+	; pointer to the current chunk	
+	mov		[rbp + 1], rex
+Chunk_print00:
+	cmp		[rbp + 1], 0
+	jit		Chunk_print01
+
+	mov		rex, CHUNK_DEBUG
+	mov		rfx, [rbp + 1]
+	mov		rfx, [rfx + 0]
+	mov		rgx, [rbp + 1]
+	mov		rgx, [rgx + 1]
+	mov		rhx, [rbp + 1]
+	push	4
+	ccall	printf
+
+	mov		rex, [rbp + 1]
+	mov		rex, [rex + 4]
+	call	__TokenList_print
+
+	mov		rax, [rbp + 1]
+	mov		[rbp + 1], [rax + 2]
+	jmp		Chunk_print00
+Chunk_print01:
+	
 	mov		rsp, rbp
 	pop		rbp
 	ret
@@ -881,16 +999,30 @@ generateTree:
 	mov		rbp, rsp
 	add		rsp, 10 ; 7 general purpose
 
-	; [rbp + 1] holds the array of tokens
-	; [rbp + 2] holds the index of the current token
-	; [rbp + 3] holds the current token
+	; [rbp + 1]		array of tokens
+	; [rbp + 2]		index of current token
+	; [rbp + 3]		holds the current token
+	; [rbp + 4]		head chunk for syntax tree
+	; [rbp + 5]		current syntax tree depth
+	; [rbp + 6]		the chunk we will append to the main sytax tree
+	; [rbp + 7]		general0
+	; [rbp + 8]		general1
+	; [rbp + 9]		general2
+	; [rbp + 10]	general3
+
 	mov		[rbp + 1], rex
 	mov		[rbp + 2], 0
 	mov		[rbp + 3], 0
-
-	mov		rex, 0
-	call	__TokenList_new
+	
+	; create a head chunk for the syntax tree
+	; move it into [rbp + 4]
+	mov		rex, 1
+	mov		rfx, 0
+	call	__Chunk_new
 	mov		[rbp + 4], rax
+
+	; the current tree depth, stored in [rbp + 5]
+	mov		[rbp + 5], 0
 
 genT00: ; while tokens[i].type != TYPE_UNKNOWN
 	mov		rax, [rbp + 1]
@@ -903,22 +1035,83 @@ genT00: ; while tokens[i].type != TYPE_UNKNOWN
 	add		rax, [rbp + 2]
 	mov		[rbp + 3], [rax + 0] 
 
-	; create a new list item
+	; the new chunk we want to append will be stored
+	; in [rbp + 6]
+
+	; switch (token->type)
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 25
+	jit		genT04				; skip if newline
+	
+	; --- CHECK FUNC TOKEN ---
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 101
+	jif		genT03	
+		
+	; --- IS FUNC ---
+	; SYNTAX FOR A FUNCTION IMPLEMENTATION:
+	; func name(argnamee, argname2, ...) { ... }
+
+	; create a chunk to hold the function
+	mov		rex, 3
+	mov		rfx, [rbp + 5]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+	
+	; function name TokenList 
+	mov		rex, 0
+	call	__TokenList_new
+	mov		[rbp + 7], rax
+
+	; function return type TokenList
+	mov		rex, 0
+	call	__TokenList_new
+	mov		[rbp + 8], rax
+
+	; increment the token pointer to the name of the function
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; store the TokenList containing the name in chunk->general[0]
 	mov		rex, [rbp + 3]
 	call	__TokenList_new
-	
-	; append the token
-	mov		rex, [rbp + 4]
+	mov		rex, [rbp + 7]
 	mov		rfx, rax
 	call	__TokenList_append
+	mov		rex, [rbp + 4]
+	mov		rfx, 0
+	mov		rgx, [rbp + 7]
+	call	__Chunk_setGeneralField
 
+	; increment the token pointer to the first argument
+	; note that we increment by two to skip over the '('
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	jmp		genT02
+	; --- ELSE: STILL HAVEN'T MATCHED A TOKEN ---
+genT03: ; else
+	mov		rex, 0
+	mov		rfx, [rbp + 5]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+	jmp		genT02
+genT02: ; done, append to head chunk
+	mov		rex, [rbp + 4]
+	mov		rfx, [rbp + 6]
+	call	__Chunk_append
+genT04: ; skip, don't append
 	add		[rbp + 2], 1
 	jmp		genT00 ; return to token main loop
 genT01:	
-
 	mov		rex, [rbp + 4]
-	call	__TokenList_print
-
+	call	__Chunk_print
+	
+	mov		rax, [rbp + 4]	
 	mov		rsp, rbp
 	pop		rbp
 	ret	

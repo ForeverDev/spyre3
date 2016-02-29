@@ -1,59 +1,68 @@
-token information
-TYPE_UNKNOWN		00
-TYPE_IDENTIFIER		01
-TYPE_STRING			02
-TYPE_NUMBER			03
-TYPE_ADD			04
-TYPE_SUB			05
-TYPE_MUL			06
-TYPE_DIV			07
-TYPE_MOD			08
-TYPE_AND			09
-TYPE_OR				10
-TYPE_XOR			11
-TYPE_SEMICOLON		12
-TYPE_COLON			13
-TYPE_OPENPAR		14
-TYPE_CLOSEPAR		15
-TYPE_OPENCURL		16
-TYPE_CLOSECURL		17
-TYPE_OPENSQ			18
-TYPE_CLOSESQ		19
-TYPE_LT				20
-TYPE_GT				21
-TYPE_EQ				22
-TYPE_COMMA			23
-TYPE_PERIOD			24
-TYPE_NEWLINE		25
-TYPE_LE				25
-TYPE_GE				26
-TYPE_CMP			27
-TYPE_FUNC			101
-TYPE_IF				102
-TYPE_WHILE			103
-TYPE_DO				104
-TYPE_FOR			105
-TYPE_BREAK			106
-TYPE_CONTINUE		107
-TYPE_RETURN			108
-TYPE_DATATYPE		109
+token types
+UNKNOWN			00
+IDENTIFIER		01
+STRING			02
+NUMBER			03
+ADD				04
+SUB				05
+MUL				06
+DIV				07
+MOD				08
+AND				09
+OR				10
+XOR				11
+SEMICOLON		12
+COLON			13
+OPENPAR			14
+CLOSEPAR		15
+OPENCURL		16
+CLOSECURL		17
+OPENSQ			18
+CLOSESQ			19
+LT				20
+GT				21
+EQ				22
+COMMA			23
+PERIOD			24
+NEWLINE			25
+LE				25
+GE				26
+CMP				27
+FUNC			101
+IF				102
+WHILE			103
+DO				104
+FOR				105
+BREAK			106
+CONTINUE		107
+RETURN			108
+DATATYPE		109
+
+chunk types
+UNKNOWN			00
+HEAD			01
+TAIL			02
+FUNC			03
+IF				04
+WHILE			05
+FOR				06
 
 
-struct token {
+struct Token {
 	int				type;
 	char			word[128];
 }
 [0] = type
 [1, 129) = word
 
-struct token_list {
+struct TokenList {
 	token*			value;
 	token_list*		next;
 }
 [0] = value
 [1] = next
 
-struct chunk {
+struct Chunk {
 	int				type;
 	int				relation;
 	chunk*			next;
