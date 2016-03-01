@@ -98,7 +98,12 @@ u8* lexb_readAndTokenize(lexb_state* L, const s8* filename) {
 		// handle strings
 		} else if (c == '"') {
 			while ((c = *++p) != '"') {
-				*bp++ = c;
+				if (c == '\\' && *(p + 1) == '\"') {
+					*bp++ = '\"';
+					p++;
+				} else {
+					*bp++ = c;
+				}
 			}
 			*bp = 0;
 			bp = buf;

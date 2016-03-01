@@ -22,20 +22,20 @@ section code
 jmp start
 
 ; field_one is at [rex]
-; field_two is at [rex - 1]
+; field_two is at [rex + 1]
 __Object_printFields:
 	push	rbp
 	mov		rbp, rsp
-	sub		rsp, 2
+	add		rsp, 2
 
-	mov		rax, [rex - 0]
-	mov		[rbp - 1], rax
-	mov		rax, [rex - 1]
-	mov		[rbp - 2], rax
+	mov		rax, [rex + 0]
+	mov		[rbp + 1], rax
+	mov		rax, [rex + 1]
+	mov		[rbp + 2], rax
 	
 	mov		rex, format
-	mov		rfx, [rbp - 1]
-	mov		rgx, [rbp - 2]
+	mov		rfx, [rbp + 1]
+	mov		rgx, [rbp + 2]
 	ccall	printf
 
 	mov		rsp, rbp
@@ -46,24 +46,22 @@ __Object_printFields:
 ; so there is no need to set them accordingly
 start:
 	; make space for two Object instances
-	sub		rsp, 4
+	add		rsp, 4
 
 	; a = Object(10.5, "HELLO");
-	mov		[rbp - 1], 10.5
-	mov		[rbp - 2], str1
+	mov		[rbp + 1], 10.5
+	mov		[rbp + 2], str1
 
 	; b = Object(69.42, "GOODBYE");
-	mov		[rbp - 3], 69.42
-	mov		[rbp - 4], str2
+	mov		[rbp + 3], 69.42
+	mov		[rbp + 4], str2
 	
 	; a.printFields();
-	mov		rex, rbp
-	sub		rex, 1
+	lea		rex, [rbp + 1]
 	call	__Object_printFields
 
 	; b.printFields();
-	mov		rex, rbp
-	sub		rex, 3
+	lea		rex, [rbp + 3]
 	call	__Object_printFields
 
 	exit

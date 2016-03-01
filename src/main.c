@@ -60,10 +60,8 @@ int main(int argc, char** argv) {
 			return 1;
 		}
 
-		if (flags['g']) {
-			strcpy(output_name, input_name);
-			strcat(output_name, "s");
-		}
+		strcpy(output_name, input_name);
+		strcat(output_name, "s");
 
 		fseek(src, 0, SEEK_END);
 		flen = ftell(src);
