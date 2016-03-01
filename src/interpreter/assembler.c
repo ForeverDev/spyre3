@@ -258,11 +258,11 @@ u8* compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filena
 		} else {
 			switch (t->type) {
 				case IDENTIFIER:
-					if (!strncmp(t->word, "SECTION", 7)) {
+					if (!strcmp(t->word, "SECTION")) {
 						t = t->next;
-						if (!strncmp(t->word, "DATA", 4)) {
+						if (!strcmp(t->word, "DATA")) {
 							ip = 0;
-						} else if (!strncmp(t->word, "CODE", 4)) {
+						} else if (!strcmp(t->word, "CODE")) {
 							code_start = (u32)(bp - bytecode + sizeof(u32)*2);
 							ip = 0;
 						}
@@ -301,6 +301,9 @@ u8* compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filena
 				if (compb_getLabel(C, t->word) > -1) {
 					sprintf(t->word, "%lf", (f64)compb_getLabel(C, t->word));
 					t->type = NUMBER;
+				} else if (compb_getRegister(C, t->word) == -1 && compb_getOpcode(C, t->word) == -1) {
+					//printf("unknown label '%s'\n", t->word);
+					//exit(1);
 				}
 				// if we find a label definition, remove it from the list.
 				// note, we have to peek so that we can properly remove

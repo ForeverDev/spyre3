@@ -56,6 +56,9 @@ void spyL_io_printf(spy_state* S, u8 nargs) {
 					case 'p':
 						printf("0x%08llx", spy_getint(S, spy_getarg(S, i++)));
 						break;
+					case 't':
+						printf("0x%08llx\n", (u64)spy_getcptr(S, spy_getarg(S, i++)));
+						break;
 				}
 				break;
 			}
@@ -75,13 +78,13 @@ void spyL_io_getchar(spy_state* S, u8 nargs) {
 // ptr getstr();
 void spyL_io_getstr(spy_state* S, u8 nargs) {
 	s8* bp = S->gen0;
-	fgets(buf, 1024, stdin);
+	fgets(S->gen0, 1024, stdin);
 	u32 len = strlen(S->gen0);
-	buf[len] = 0;
+	S->gen0[len] = 0;
 	for (u32 i = len - 1; i > 0; i--) {
-		buf[i] = buf[i - 1];
+		S->gen0[i] = S->gen0[i - 1];
 	}
-	buf[0] = 0;
+	S->gen0[0] = 0;
 	while (*++bp);
 	bp--;
 	spy_pushchar(S, 0);
@@ -120,7 +123,7 @@ void spyL_io_fprintf(spy_state* S, u8 nargs) {
 	void* file = spy_getcptr(S, "REX");
 	
 	spy_setregister(S, "REX", 0);
-	spyL_io_sprintf(S, nargs);
+	spyL_str_sprintf(S, nargs);
 
 	// the string to write is now in S->gen2
 	fwrite(S->gen2, 1, strlen(S->gen2), file);
@@ -196,7 +199,7 @@ void spyL_str_strcmp(spy_state* S, u8 nargs) {
 
 void spyL_str_sprintf(spy_state* S, u8 nargs) {
 	s8* pf = S->gen0; 
-	s8* bp = S->gen2
+	s8* bp = S->gen2;
 	u64 addr = spy_getint(S, "REX");
 	spy_getstr(S, "RFX", S->gen0);
 	u8 i = 2;

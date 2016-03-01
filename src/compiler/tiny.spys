@@ -7,6 +7,10 @@ let strcpy				"strcpy"
 let memcpy				"memcpy"
 let memset				"memset"
 let strcmp				"strcmp"
+let fprintf				"fprintf"
+let sprintf				"sprintf"
+let fopen				"fopen"
+let fclose				"fclose"
 
 ; ----- constant strings -----
 let DEBUG_IO_INOUT		"input name: %s\noutput name: %s\n"
@@ -17,6 +21,7 @@ let FORMAT_CHAR			"%c\n"
 let FORMAT_NUM			"%d\n"
 let FORMAT_HEX			"%x\n"
 let FORMAT_PTR			"%p\n"
+let FORMAT_CPTR			"%t\n"
 
 ; file system modes
 let FS_MODE_W			"w"
@@ -45,61 +50,68 @@ let TOK_KW_LABEL		"label"
 let	CHUNK_DEBUG			"CHUNK:\n\tTYPE: %d\n\tDEPTH: %d\n\tADDR: %p\n\tNEXT: %p\n\tLAST: %p\n"
 
 ; registers
-let REG_RIP				"RIP"
-let REG_RSP				"RSP"
-let REG_RBP				"RBP"
-let REG_RAX				"RAX"
-let REG_RBX				"RBX"
-let REG_RCX				"RCX"
-let REG_RDX				"RDX"
-let REG_REX				"REX"
-let REG_RFX				"RFX"
-let REG_RGX				"RGX"
-let REG_RHX				"RGX"
-let REG_RIX				"RIX"
-let REG_RJX				"RJX"
+let REG_RIP				"rip"
+let REG_RSP				"rsp"
+let REG_RBP				"rbp"
+let REG_RAX				"rax"
+let REG_RBX				"rbx"
+let REG_RCX				"rcx"
+let REG_RDX				"rdx"
+let REG_REX				"rex"
+let REG_RFX				"rfx"
+let REG_RGX				"rgx"
+let REG_RHX				"rgx"
+let REG_RIX				"rix"
+let REG_RJX				"rjx"
 
 ; instructions
-let	INS_NOOP			"NOOP"
-let INS_EXIT			"EXIT"
-let INS_RET				"RET"
-let INS_MOV				"MOV"
-let INS_ADD				"ADD"
-let INS_SUB				"SUB"	
-let INS_MUL				"MUL"
-let INS_DIV				"DIV"
-let INS_NEG				"NEG"
-let INS_OR				"OR"
-let INS_AND				"AND"
-let INS_XOR				"XOR"
-let INS_NOT				"NOT"
-let INS_SHL				"SHL"
-let INS_SHR				"SHR"
-let INS_LT				"LT"
-let INS_LE				"LE"
-let INS_GT				"GT"
-let INS_GE				"GE"
-let INS_CMP				"CMP"
-let INS_LAND			"LAND"
-let INS_LOR				"LOR"
-let INS_LNOT			"LNOT"
-let INS_PUSH			"PUSH"
-let INS_POP				"POP"
-let INS_CALL			"CALL"
-let INS_CCALL			"CCALL"
-let INS_JMP				"JMP"
-let INS_JIF				"JIF"
-let INS_JIT				"JIT"
+let	INS_NOOP			"noop"
+let INS_EXIT			"exit"
+let INS_RET				"ret"
+let INS_MOV				"mov"
+let INS_ADD				"add"
+let INS_SUB				"sub"	
+let INS_MUL				"mul"
+let INS_DIV				"div"
+let INS_NEG				"neg"
+let INS_OR				"or"
+let INS_AND				"and"
+let INS_XOR				"xor"
+let INS_NOT				"not"
+let INS_SHL				"shl"
+let INS_SHR				"shr"
+let INS_LT				"lt"
+let INS_LE				"le"
+let INS_GT				"gt"
+let INS_GE				"ge"
+let INS_CMP				"cmp"
+let INS_LAND			"land"
+let INS_LOR				"lor"
+let INS_LNOT			"lnot"
+let INS_PUSH			"push"
+let INS_POP				"pop"
+let INS_CALL			"call"
+let INS_CCALL			"ccall"
+let INS_JMP				"jmp"
+let INS_JIF				"jif"
+let INS_JIT				"jit"
 
-let INS_MODE0			"%s\t"
-let INS_MODE1			"%s\t%s" 
-let INS_MODE2			"%s\t%s, %d"
-let INS_MODE3			"%s\t%s, %s"
-let INS_MODE4			"%s\t%s, [%s + %d]"
-let INS_MODE5			"%s\t[%s + %d], %d"
-let INS_MODE6			"%s\t[%s + %d]"
-let INS_MODE7			"%s\t%d"
-let INS_MODE8			"%s\t[%s + %d], [%s + %d]"
+let PUT_MODE0			"%s\t\n"
+let PUT_MODE1			"%s\t%s\n" 
+let PUT_MODE2			"%s\t%s, %d\n"
+let PUT_MODE3			"%s\t%s, %s\n"
+let PUT_MODE4			"%s\t%s, [%s + %d]\n"
+let PUT_MODE5			"%s\t[%s + %d], %d\n"
+let PUT_MODE6			"%s\t[%s + %d]\n"
+let PUT_MODE7			"%s\t%d\n"
+let PUT_MODE7S			"%s\t%s\n"
+let PUT_MODE8			"%s\t[%s + %d], [%s + %d]\n"
+let PUT_LABEL			"%s:\n"
+let PUT_SECT			"section %s"
+
+let SECT_DATA			"data"
+let SECT_CODE			"code"
+let LBL_START			"start"
 
 ; --------------- START LEXER ---------------
 section code
@@ -1647,13 +1659,71 @@ genT04: ; skip, don't append
 	add		[rbp + 2], 1
 	jmp		genT00 ; return to token main loop
 genT01:	
-	mov		rex, [rbp + 4]
-	call	__Chunk_print
 	
 	mov		rax, [rbp + 4]	
 	mov		rsp, rbp
 	pop		rbp
 	ret	
+
+; ---------- START COMPILER ----------
+
+; ARGS
+;	REX: file output name
+;	RFX: syntax tree
+generateBytecode:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 3
+	
+	; [rbp + 1] out file name
+	; [rbp + 2] syntax tree
+	; [rbp + 3] output file handle
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], rfx
+
+	; open the file for writing
+	mov		rex, [rbp + 1]
+	mov		rfx, FS_MODE_W
+	push	2
+	ccall	fopen
+	mov		[rbp + 3], rax
+
+	; write the data section
+	mov		rex, [rbp + 3]
+	mov		rfx, PUT_SECT
+	mov		rgx, SECT_DATA
+	ccall	fprintf
+
+	; write a new line
+	mov		rex, [rbp + 3]
+	mov		rfx, FORMAT_CHAR
+	mov		rgx, 10
+	ccall	fprintf
+
+	; write the code section
+	mov		rex, [rbp + 3]
+	mov		rfx, PUT_SECT
+	mov		rgx, SECT_CODE
+	ccall	fprintf
+
+	; write a new line
+	mov		rex, [rbp + 3]
+	mov		rfx, FORMAT_CHAR
+	mov		rgx, 10
+	ccall	fprintf
+
+	; jump to start
+	mov		rex, [rbp + 3]
+	mov		rfx, PUT_MODE7S
+	mov		rgx, INS_JMP
+	mov		rhx, LBL_START
+	push	4
+	ccall	fprintf
+	
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
 
 ; ARGS
 ;	REX: FILE CONTENTS
@@ -1690,6 +1760,11 @@ start:
 	mov		rex, [rbp + 5]
 	call	generateTree
 	mov		[rbp + 6], rax
+
+	; compile
+	mov		rex, [rbp + 4]
+	mov		rfx, [rbp + 6]
+	call	generateBytecode
 
 	mov		rsp, rbp
 	pop		rbp
