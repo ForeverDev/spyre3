@@ -14,7 +14,7 @@ XOR				11
 SEMICOLON		12
 COLON			13
 OPENPAR			14
-
+CLOSEPAR		15
 OPENCURL		16
 CLOSECURL		17
 OPENSQ			18
@@ -39,6 +39,8 @@ CONTINUE		107
 RETURN			108
 GOTO			109
 LABEL			110
+EXTERN			111
+LET				112
 
 chunk types
 UNKNOWN			00
@@ -53,6 +55,9 @@ CONTINUE		08
 BREAK			09
 GOTO			10
 LABEL			11
+EXTERN			12
+LET				13
+EXPRESSION		99
 
 
 struct Token {
@@ -63,11 +68,16 @@ struct Token {
 [1, 129) = word
 
 struct TokenList {
-	token*			value;
-	token_list*		next;
+	Token*			value;
+	TokenList*		next;
 }
 [0] = value
 [1] = next
+
+struct Queue {
+	int				label_id;
+	Queue*			next;
+}
 
 struct Chunk {
 	int				type;

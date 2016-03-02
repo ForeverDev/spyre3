@@ -45,6 +45,8 @@ let TOK_KW_CONTINUE		"continue"
 let TOK_KW_RETURN		"return"
 let TOK_KW_GOTO			"goto"
 let TOK_KW_LABEL		"label"
+let TOK_KW_LET			"let"
+let TOK_KW_EXTERN		"extern"
 
 ; chunk variables
 let	CHUNK_DEBUG			"CHUNK:\n\tTYPE: %d\n\tDEPTH: %d\n\tADDR: %p\n\tNEXT: %p\n\tLAST: %p\n"
@@ -107,7 +109,8 @@ let PUT_MODE7			"%s\t%d\n"
 let PUT_MODE7S			"%s\t%s\n"
 let PUT_MODE8			"%s\t[%s + %d], [%s + %d]\n"
 let PUT_LABEL			"%s:\n"
-let PUT_SECT			"section %s"
+let PUT_SECT			"section %s\n"
+let PUT_LET				"let %s \"%s\"\n"
 
 let SECT_DATA			"data"
 let SECT_CODE			"code"
@@ -445,8 +448,24 @@ L06_09:
 	push	2
 	ccall	strcmp
 	cmp		rax, 1
-	jif		L06_else
+	jif		L06_10
 	mov		[rbp + 9], 110
+	jmp		L06_00
+L06_10:
+	mov		rfx, TOK_KW_EXTERN		; check 'extern'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_11
+	mov		[rbp + 9], 111
+	jmp		L06_00
+L06_11:
+	mov		rfx, TOK_KW_LET			; check 'let'
+	push	2
+	ccall	strcmp
+	cmp		rax, 1
+	jif		L06_else
+	mov		[rbp + 9], 112
 	jmp		L06_00
 L06_else:
 	mov		[rbp + 9], 1
@@ -937,7 +956,7 @@ Chunk_getTail00:
 	mov		rax, [rbp + 1]
 	cmp		[rax + 2], 0
 	jit		Chunk_getTail01
-	
+
 	mov		rax, [rbp + 1]
 	mov		[rbp + 1], [rax + 2]
 
@@ -1048,9 +1067,15 @@ Chunk_print01:
 	ret
 
 ; ARGS
+;	REX: TokenList to reorganize
+__Chunk_convertToPostfix:
+	ret
+
+; ARGS
 ;	REX: chunk
 ;	RFX: index
 ;	RGX: token_list
+;	RHX: should_convert_to_postfix
 __Chunk_setGeneralField:
 	push	rbp
 	mov		rbp, rsp
@@ -1065,7 +1090,16 @@ __Chunk_setGeneralField:
 	add		rax, 4
 	add		rax, [rbp + 2]
 
+	; TODO this is where we will implement conversion
+	; to postfix.  only convert to postfix if RHX is 1
+	
 	; now write
+	jif		setGF00
+	lea		rex, [rbp + 3]
+	push	rax
+	call	__Chunk_convertToPostfix
+	pop		rax
+setGF00:
 	mov		[rax + 0], [rbp + 3]
 
 	mov		rsp, rbp
@@ -1254,6 +1288,7 @@ genT00_99:
 	mov		rex, [rbp + 6]
 	mov		rfx, 0
 	mov		rgx, [rbp + 7]
+	mov		rhx, 0
 	call	__Chunk_setGeneralField
 
 	; increment the token pointer to the first argument
@@ -1343,6 +1378,7 @@ genT03:
 	mov		rex, [rbp + 6]
 	mov		rfx, 0
 	mov		rgx, rax
+	mov		rhx, 1
 	call	__Chunk_setGeneralField
 
 	; move the token pointer up one more, getting infront of the '{'
@@ -1386,6 +1422,7 @@ genT06:
 	mov		rex, [rbp + 6]
 	mov		rfx, 0
 	mov		rgx, rax
+	mov		rhx, 1
 	call	__Chunk_setGeneralField
 
 	; move the token pointer up one more, getting infront of the '{'
@@ -1432,6 +1469,7 @@ genT05:
 	mov		rex, [rbp + 6]
 	mov		rfx, 0
 	mov		rgx, rax
+	mov		rhx, 1
 	call	__Chunk_setGeneralField
 
 	; we're on the semicolon of the initialization
@@ -1452,6 +1490,7 @@ genT05:
 	mov		rex, [rbp + 6]
 	mov		rfx, 1
 	mov		rgx, rax
+	mov		rhx, 1
 	call	__Chunk_setGeneralField
 
 	; we're on the semicolon of the coniditon
@@ -1472,6 +1511,7 @@ genT05:
 	mov		rex, [rbp + 6]
 	mov		rfx, 2
 	mov		rgx, rax
+	mov		rhx, 1
 	call	__Chunk_setGeneralField
 
 	; we're on the '{' increment by one to pass it
@@ -1515,6 +1555,7 @@ genT07:
 	mov		rex, [rbp + 6]
 	mov		rfx, 0
 	mov		rgx, rax
+	mov		rhx, 0
 	call	__Chunk_setGeneralField
 	
 	jmp		genT02
@@ -1592,6 +1633,7 @@ genT10:
 	mov		rex, [rbp + 6]
 	mov		rfx, 0
 	mov		rgx, rax
+	mov		rhx, 0
 	call	__Chunk_setGeneralField
 
 	; still on the identifier, increment
@@ -1631,6 +1673,88 @@ genT11:
 	mov		rex, [rbp + 6]
 	mov		rfx, 0
 	mov		rgx, rax
+	mov		rhx, 0
+	call	__Chunk_setGeneralField
+
+	; still on the identifier, increment
+	; to skip over the semicolon
+	add		[rbp + 2], 2
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	jmp		genT02
+	; --- END LABEL PARSING ---
+	; --- ELSE IF EXTERN --- 
+
+genT12:
+
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 111
+	jif		genT13
+
+	mov		rex, 12
+	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+
+	; we're on the token 'EXTERN'
+	; increment and assign the identifier
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; now we're on the identifier
+	mov		rex, [rbp + 3]
+	call	__TokenList_new
+
+	mov		rex, [rbp + 6]
+	mov		rfx, 0
+	mov		rgx, rax
+	mov		rhx, 0
+	call	__Chunk_setGeneralField
+
+	; still on the identifier, increment
+	; to skip over the semicolon
+	add		[rbp + 2], 2
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	jmp		genT02
+	
+	; --- END EXTERN PARSING ---
+	; --- ELSE IF LET ---
+
+genT13:
+
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 112
+	jif		genT14
+
+	mov		rex, 13
+	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+
+	; we're on the token 'EXTERN'
+	; increment and assign the identifier
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; now we're on the identifier
+	mov		rex, [rbp + 3]
+	call	__TokenList_new
+
+	mov		rex, [rbp + 6]
+	mov		rfx, 0
+	mov		rgx, rax
+	mov		rhx, 0
 	call	__Chunk_setGeneralField
 
 	; still on the identifier, increment
@@ -1642,12 +1766,43 @@ genT11:
 
 	jmp		genT02
 
-genT12:
-	mov		rex, 0
+	; --- END LET PARSING ---
+	; --- ELSE ---
+
+genT14:
+	
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 0
+	jit		genT04			; skip if EOF
+
+	; no special structure here, it is just an expression
+	; simple parse to the nearest semicolon
+	mov		rex, 99
 	mov		rfx, [rbp + 5]
 	mov		rgx, [rbp + 10]
 	call	__Chunk_new
 	mov		[rbp + 6], rax
+
+	; we're on the start of the expression, 
+	; parse the statement until a ';'
+	mov		rex, [rbp + 1]
+	lea		rfx, [rbp + 2]
+	mov		rgx, 0
+	mov		rhx, 12
+	call	parseUntil
+
+	; now set general[0]
+	mov		rex, [rbp + 6]
+	mov		rfx, 0
+	mov		rgx, rax
+	mov		rhx, 0
+	call	__Chunk_setGeneralField
+
+	; increment over the semicolon
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
 
 	jmp		genT02
 genT02: ; done, append to head chunk
@@ -1666,6 +1821,68 @@ genT01:
 	ret	
 
 ; ---------- START COMPILER ----------
+; ARGS
+;	REX syntax tree
+;	RFX file handle
+; notes
+; expect that the 'section data' header has already been written
+; does not close the data section, so the 'section code' header
+; must be written elsewhere
+; this function finds string constants and extern labels
+findConstants:
+	; TODO loop through all chunks and find any externs and strings
+	; stick them in the data section when they are found
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 3
+	
+	; [rbp + 1] is the syntax tree
+	; [rbp + 2] is the file handle
+	; [rbp + 3] is the current node in the tree
+	; [rbp + 4] is the tail of the syntax tree
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], rfx
+	mov		[rbp + 3], rex
+	
+	; get the tail fo the syntax tree for the comparison loop	
+	mov		rex, [rbp + 1]
+	call	__Chunk_getTail
+	mov		[rbp + 4], rax
+
+findC00:
+	; while (chunk != NULL)
+	cmp		[rbp + 3], 0
+	jit		findC01
+
+	; if we found an extern
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 12
+	jif		findC02
+	; now we know it's an extern
+	; the identifier is general[0][0]
+	mov		rax, [rax + 4]
+	mov		rax, [rax + 0]
+	lea		rax, [rax + 1]
+	; rax now contains the identifier string
+	; write the string to the data section
+	mov		rex, [rbp + 2]
+	mov		rfx, PUT_LET
+	mov		rgx, rax
+	mov		rhx, rax
+	push	4
+	ccall	fprintf
+
+findC02:
+
+	mov		rax, [rbp + 3]
+	mov		[rbp + 3], [rax + 2]
+		
+	jmp		findC00
+findC01:
+
+	mov		rsp, rbp
+	pop		rbp
+	ret
 
 ; ARGS
 ;	REX: file output name
@@ -1673,11 +1890,13 @@ genT01:
 generateBytecode:
 	push	rbp
 	mov		rbp, rsp
-	add		rsp, 3
+	add		rsp, 4
 	
 	; [rbp + 1] out file name
 	; [rbp + 2] syntax tree
 	; [rbp + 3] output file handle
+	; [rbp + 4] holds the current node in the tree
+	; [rbp + 5] holds the last node in the tree
 	mov		[rbp + 1], rex
 	mov		[rbp + 2], rfx
 
@@ -1693,6 +1912,12 @@ generateBytecode:
 	mov		rfx, PUT_SECT
 	mov		rgx, SECT_DATA
 	ccall	fprintf
+
+	; generate the constant memory section
+	; this handles C function externs as well as string literals	
+	mov		rex, [rbp + 2]
+	mov		rfx, [rbp + 3]
+	call	findConstants
 
 	; write a new line
 	mov		rex, [rbp + 3]
@@ -1720,6 +1945,8 @@ generateBytecode:
 	push	4
 	ccall	fprintf
 	
+	; now we're ready to start inserting code
+
 	mov		rsp, rbp
 	pop		rbp
 	ret

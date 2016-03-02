@@ -1,7 +1,16 @@
+extern printf;
+extern fopen;
+
 func main() {
 	
-	label test;
+	let i;
+	let x;
 
-	goto test;
+	i = 0;
+
+	for ; i < 10; i++ {
+		
+
+	}
 
 }
