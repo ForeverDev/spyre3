@@ -1,9 +1,5 @@
 section data
-let printf "printf"
-let fopen "fopen"
-
 
 section code
-
 
 jmp	start

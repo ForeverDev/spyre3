@@ -109,8 +109,8 @@ let PUT_MODE7			"%s\t%d\n"
 let PUT_MODE7S			"%s\t%s\n"
 let PUT_MODE8			"%s\t[%s + %d], [%s + %d]\n"
 let PUT_LABEL			"%s:\n"
-let PUT_SECT			"section %s\n"
-let PUT_LET				"let %s \"%s\"\n"
+let PUT_SECT			"section %s"
+let PUT_LET				"let \"%s\"\n"
 
 let SECT_DATA			"data"
 let SECT_CODE			"code"
@@ -1829,17 +1829,21 @@ genT01:
 ; does not close the data section, so the 'section code' header
 ; must be written elsewhere
 ; this function finds string constants and extern labels
+
+; ALSO NOTE
 findConstants:
 	; TODO loop through all chunks and find any externs and strings
 	; stick them in the data section when they are found
 	push	rbp
+	push	rbx
 	mov		rbp, rsp
-	add		rsp, 3
+	add		rsp, 10
 	
 	; [rbp + 1] is the syntax tree
 	; [rbp + 2] is the file handle
 	; [rbp + 3] is the current node in the tree
 	; [rbp + 4] is the tail of the syntax tree
+	; [rbp [7, 10]] general purpose
 	mov		[rbp + 1], rex
 	mov		[rbp + 2], rfx
 	mov		[rbp + 3], rex
@@ -1862,17 +1866,62 @@ findC00:
 	; the identifier is general[0][0]
 	mov		rax, [rax + 4]
 	mov		rax, [rax + 0]
-	lea		rax, [rax + 1]
-	; rax now contains the identifier string
-	; write the string to the data section
-	mov		rex, [rbp + 2]
-	mov		rfx, PUT_LET
-	mov		rgx, rax
-	mov		rhx, rax
-	push	4
-	ccall	fprintf
+	jmp		findC03
 
 findC02:
+
+	; now we want to check the general fields
+	; for strings.  If we do find a string, write
+	; it to the data section and rewrite the string
+	; with the data section identifier
+	mov		[rbp + 7], 0 ; this is the current general field
+findC0_00:
+	lt		[rbp + 7], 4
+	jif		findC0_01
+
+	mov		rax, [rbp + 3]
+	add		rax, 4
+	add		rax, [rbp + 7]
+	mov		rax, [rax + 0]
+	; rax now contains the TokenList we want to search
+	; check if it is null and skip the loop if it is
+	cmp		[rax + 0], 0
+	jit		findC0_00_01
+findC0_00_00:
+	; this is the loop where we scan for a string
+	; we will scan until TokenList->value == NULL
+	cmp		rax, 0
+	jit		findC0_00_01
+	
+	; check if the type of the token inside of the TokenList
+	; is a string	
+	mov		rbx, [rax + 0]
+	mov		rbx, [rbx + 0]
+	; rbx now contains the type of the token
+	cmp		rbx, 2
+	; after the comparison move the word of the token into rbx
+	mov		rbx, [rax + 0]
+	lea		rbx, [rbx + 1]
+	jif		findC0_00_02
+	; we now know it is a string, write it to
+	; the const memory section
+	mov		rex, [rbp + 2]
+	mov		rfx, PUT_LET
+	mov		rgx, REG_RAX ; TODO UPDTE WITH A COUNTER, THIS IS FOR TEST
+	mov		rhx, rbx
+	push	4
+	ccall	fprintf
+findC0_00_02:
+
+	mov		rax, [rax + 1]
+	jmp		findC0_00_00
+findC0_00_01:
+	
+	add		[rbp + 7], 1
+	jmp		findC0_00
+findC0_01:
+
+findC03:
 
 	mov		rax, [rbp + 3]
 	mov		[rbp + 3], [rax + 2]
@@ -1881,6 +1930,7 @@ findC02:
 findC01:
 
 	mov		rsp, rbp
+	pop		rbx
 	pop		rbp
 	ret
 
