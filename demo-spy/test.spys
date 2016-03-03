@@ -1,5 +1,10 @@
 section data
+let printf "printf"
+let fopen "fopen"
+let STR0 "Hello"
+
 
 section code
+
 
 jmp	start

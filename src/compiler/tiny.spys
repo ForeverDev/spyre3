@@ -109,8 +109,9 @@ let PUT_MODE7			"%s\t%d\n"
 let PUT_MODE7S			"%s\t%s\n"
 let PUT_MODE8			"%s\t[%s + %d], [%s + %d]\n"
 let PUT_LABEL			"%s:\n"
-let PUT_SECT			"section %s"
-let PUT_LET				"let \"%s\"\n"
+let PUT_SECT			"section %s\n"
+let PUT_LET				"let %s \"%s\"\n"
+let PUT_STRLET			"let STR%d \"%s\"\n"
 
 let SECT_DATA			"data"
 let SECT_CODE			"code"
@@ -542,6 +543,42 @@ L07: ; ELSE IF IS OPERATOR
 	mov		[rbp + 52], 0 ; initialize the type to TYPE_UNKNOWN
 	mov		[rbp + 9], 0
 	; switch(character)
+L69_00:
+	cmp		[rbp + 6], 34 ; case "
+	jif		L69_01
+	; we've identified that it is a string
+	; now we need to go until the closing quote
+	
+	mov		[rbp + 10], 0
+L69_02:
+	; increment to the next character
+	add		[rbp + 5], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 5]
+	mov		[rbp + 6], [rax + 0]
+	
+	; check for closing "
+	cmp		[rbp + 6], 34
+	jit		L69_03
+
+	; append character to buffer
+	lea		rax, [rbp + 51]
+	add		rax, [rbp + 10]
+	mov		[rax + 0], [rbp + 6]
+
+	; increment buffer counter
+	add		[rbp + 10], 1
+
+	jmp		L69_02
+L69_03:
+	; null terminate
+	lea		rax, [rbp + 51]
+	add		rax, [rbp + 10]
+	mov		[rax + 0], 0
+
+	mov		[rbp + 9], 2
+	jmp		L12
+L69_01:
 	cmp		[rbp + 6], 43 ; case +
 	jif		L13
 	mov		[rbp + 9], 4
@@ -1866,6 +1903,18 @@ findC00:
 	; the identifier is general[0][0]
 	mov		rax, [rax + 4]
 	mov		rax, [rax + 0]
+	; for some reason there is junk in the first
+	; character of the identifier, increase by one
+	; TODO find the source of this problem
+	add		rax, 1
+
+	; now we have the identifier in rax
+	mov		rex, [rbp + 2]
+	mov		rfx, PUT_LET
+	mov		rgx, rax
+	mov		rhx, rax
+	push	4
+	ccall	fprintf
 	jmp		findC03
 
 findC02:
@@ -1875,6 +1924,7 @@ findC02:
 	; it to the data section and rewrite the string
 	; with the data section identifier
 	mov		[rbp + 7], 0 ; this is the current general field
+	mov		[rbp + 8], 0 ; string counter
 findC0_00:
 	lt		[rbp + 7], 4
 	jif		findC0_01
@@ -1906,11 +1956,13 @@ findC0_00_00:
 	; we now know it is a string, write it to
 	; the const memory section
 	mov		rex, [rbp + 2]
-	mov		rfx, PUT_LET
-	mov		rgx, REG_RAX ; TODO UPDTE WITH A COUNTER, THIS IS FOR TEST
+	mov		rfx, PUT_STRLET
+	mov		rgx, [rbp + 8]
 	mov		rhx, rbx
 	push	4
 	ccall	fprintf
+
+	add		[rbp + 8], 1
 findC0_00_02:
 
 	mov		rax, [rax + 1]
