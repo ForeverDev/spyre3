@@ -2010,7 +2010,7 @@ findC01:
 generateBytecode:
 	push	rbp
 	mov		rbp, rsp
-	add		rsp, 4
+	add		rsp, 6
 	
 	; [rbp + 1] out file name
 	; [rbp + 2] syntax tree
@@ -2066,6 +2066,8 @@ generateBytecode:
 	mov		rhx, LBL_START
 	push	4
 	ccall	fprintf
+
+	dlog	99
 	
 	; now we're ready to start inserting code
 	; [rbp + 4] is the current node
@@ -2081,6 +2083,8 @@ code00:
 	mov		[rbp + 4], [rax + 2] 
 	jmp		code00
 code01:
+
+	dlog	978
 
 	mov		rsp, rbp
 	pop		rbp

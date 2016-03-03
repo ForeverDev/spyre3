@@ -5,17 +5,8 @@ let sprintf "sprintf"
 let STR0 "Hello"
 let STR1 "Goodbye"
 
+
 section code
 
 
 jmp	start
-
-start:
-	push		rbp
-	mov			rbp, rsp
-
-	
-	
-	mov			rsp, rbp
-	pop			rbp
-	exit
