@@ -238,6 +238,7 @@ void spyL_str_sprintf(spy_state* S, u8 nargs) {
 		for (u64 i = 0; i < strlen(S->gen2); i++) {
 			spy_setmem(S, addr + i, S->gen2[i]);	
 		}
+		spy_setmem(S, addr + strlen(S->gen2), 0);
 	}
 	spy_setregister(S, "RAX", 0);
 }

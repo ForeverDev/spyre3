@@ -1,7 +1,10 @@
 section data
 let printf "printf"
 let fopen "fopen"
-let STR0 "Hello"
+let STR0 "Testing string number one"
+let STR1 "Testing string number two"
+let STR2 "Meme arrows mlady lol"
+let STR3 "xddd nice meme"
 
 
 section code

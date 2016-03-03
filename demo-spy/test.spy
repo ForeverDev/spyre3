@@ -2,7 +2,16 @@ extern printf;
 extern fopen;
 
 func main() {
+
+	x := "Testing string number one";
+	y := "Testing string number two";
 	
-	x := "Hello";	
+	z := "Meme arrows mlady lol";	
+
+	if i == 10 {
+		
+		a := "xddd nice meme";
+
+	}
 
 }
