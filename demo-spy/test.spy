@@ -1,17 +1,23 @@
 extern printf;
 extern fopen;
+extern sprintf;
 
-func main() {
-
-	x := "Testing string number one";
-	y := "Testing string number two";
+func main(argc, argv) {
 	
-	z := "Meme arrows mlady lol";	
-
-	if i == 10 {
+	let x;
+	let y;
 		
-		a := "xddd nice meme";
-
+	x = "Hello";
+	y = "Goodbye";
+	
+	if something == 1 {
+		goto end;
 	}
+
+	if something == 2 {
+		goto end;
+	}
+
+	label end;
 
 }

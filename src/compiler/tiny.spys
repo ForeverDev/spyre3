@@ -2017,8 +2017,10 @@ generateBytecode:
 	; [rbp + 3] output file handle
 	; [rbp + 4] holds the current node in the tree
 	; [rbp + 5] holds the last node in the tree
+	; [rbp + 6] holds the label count
 	mov		[rbp + 1], rex
 	mov		[rbp + 2], rfx
+	mov		[rbp + 4], rfx
 
 	; open the file for writing
 	mov		rex, [rbp + 1]
@@ -2066,6 +2068,19 @@ generateBytecode:
 	ccall	fprintf
 	
 	; now we're ready to start inserting code
+	; [rbp + 4] is the current node
+	mov		[rbp + 6], 0 
+code00:
+	cmp		[rbp + 4], 0
+	jit		code01	
+
+	; we're looping through each node in the syntax
+	; tree
+
+	mov		rax, [rbp + 4]
+	mov		[rbp + 4], [rax + 2] 
+	jmp		code00
+code01:
 
 	mov		rsp, rbp
 	pop		rbp
