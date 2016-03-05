@@ -926,6 +926,46 @@ print01:
 	ret
 
 ; ARGS
+;	REX: TokenList in infix
+__TokenList_createInPostfix
+	dlog	99
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 5
+
+	; [rbp + 1] infix TokenList
+	; [rbp + 2] current infix
+	; [rbp + 3] operator TokenList
+	; [rbp + 4] RPN TokenList
+
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], rex
+	
+	; create the operator list
+	mov		rex, 0
+	call	__TokenList_new
+	mov		[rbp + 3], rax
+
+	; create the RPN list
+	mov		rex, 0
+	call	__TokenList_new
+	mov		[rbp + 4], rax
+create00:
+	cmp		[rbp + 2], 0
+	jit		create01
+
+	mov		rex, [rbp + 2]
+	mov		rex, [rbp + 0]	
+	call	__Token_print
+
+	mov		rax, [rbp + 2]
+	jmp		create00
+create01:
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+; ARGS
 ;	REX: type
 ;	RFX: relation
 ;	RGX: pointer to last
@@ -1105,11 +1145,6 @@ Chunk_print01:
 	ret
 
 ; ARGS
-;	REX: TokenList to reorganize
-__Chunk_convertToPostfix:
-	ret
-
-; ARGS
 ;	REX: chunk
 ;	RFX: index
 ;	RGX: token_list
@@ -1122,20 +1157,19 @@ __Chunk_setGeneralField:
 	mov		[rbp + 1], rex ; chunk
 	mov		[rbp + 2], rfx ; index
 	mov		[rbp + 3], rgx ; token_list
+	mov		[rbp + 4], rhx
 
 	; find the location we want to write to
 	mov		rax, [rbp + 1]
 	add		rax, 4
 	add		rax, [rbp + 2]
-
-	; TODO this is where we will implement conversion
-	; to postfix.  only convert to postfix if RHX is 1
 	
 	; now write
+	cmp		[rbp + 4], 0
 	jif		setGF00
 	lea		rex, [rbp + 3]
 	push	rax
-	call	__Chunk_convertToPostfix
+	call	__TokenList_createInPostfix
 	pop		rax
 setGF00:
 	mov		[rax + 0], [rbp + 3]
@@ -1369,6 +1403,7 @@ genT00_01:
 	mov		rex, [rbp + 6]
 	mov		rfx, 1
 	mov		rgx, [rbp + 8]
+	mov		rhx, 0
 	call	__Chunk_setGeneralField
 
 	; we're currently on the closing ')' of the function arguments list
@@ -1870,7 +1905,6 @@ genT01:
 
 ; ALSO NOTE
 findConstants:
-	; TODO loop through all chunks and find any externs and strings
 	; stick them in the data section when they are found
 	push	rbp
 	push	rbx
@@ -2005,6 +2039,49 @@ findC01:
 	ret
 
 ; ARGS
+;	NONE
+__LabelStack_new:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 2
+
+	; allocate a new LabelStack
+	mov		rex, 2
+	push	1
+	ccall	malloc
+	mov		[rbp + 2], rax
+
+	mov		[rax + 0], 0
+	mov		[rax + 1], 0
+
+	mov		rax, [rbp + 2]
+
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+; ARGS
+;	REX: LabelStack to append to
+;	RFX: label ID to append
+__LabelStack_append:
+	push	rbp
+	mov		rbp, rsp
+	add		rsp, 3
+
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], rfx
+	
+	; TODO append this
+	mov		rex, 2
+	push	1
+	ccall	malloc
+	mov		[rbp + 3], rax
+
+	mov		rsp, rbp
+	pop		rbp
+	ret
+
+; ARGS
 ;	REX: file output name
 ;	RFX: syntax tree
 generateBytecode:
@@ -2018,6 +2095,7 @@ generateBytecode:
 	; [rbp + 4] holds the current node in the tree
 	; [rbp + 5] holds the last node in the tree
 	; [rbp + 6] holds the label count
+	; [rbp + 7] holds the LabelStack
 	mov		[rbp + 1], rex
 	mov		[rbp + 2], rfx
 	mov		[rbp + 4], rfx
@@ -2067,8 +2145,6 @@ generateBytecode:
 	push	4
 	ccall	fprintf
 
-	dlog	99
-	
 	; now we're ready to start inserting code
 	; [rbp + 4] is the current node
 	mov		[rbp + 6], 0 
@@ -2083,8 +2159,6 @@ code00:
 	mov		[rbp + 4], [rax + 2] 
 	jmp		code00
 code01:
-
-	dlog	978
 
 	mov		rsp, rbp
 	pop		rbp

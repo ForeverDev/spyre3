@@ -59,6 +59,11 @@ EXTERN			12
 LET				13
 EXPRESSION		99
 
+__TokenList_new(Token);
+__TokenList_append(TokenList);
+__TokenList_getTail(TokenList);
+__TokenList_createInPostfix(TokenList);
+
 
 struct Token {
 	int				type;
@@ -74,20 +79,22 @@ struct TokenList {
 [0] = value
 [1] = next
 
-struct Queue {
-	int				label_id;
-	Queue*			next;
-}
-
 struct Chunk {
 	int				type;
 	int				relation;
 	chunk*			next;
 	chunk*			last;
-	token_list*		general[4];
+	TokenList*		general[4];
 }
 [0] = type
 [1] = relation
 [2] = next
 [3] = last
 [4, 8) = general
+
+struct LabelStack {
+	int				label_id;
+	LabelStack*		next;
+}
+[0] = id
+[1] = next
