@@ -302,8 +302,10 @@ u8* compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filena
 					sprintf(t->word, "%lf", (f64)compb_getLabel(C, t->word));
 					t->type = NUMBER;
 				} else if (compb_getRegister(C, t->word) == -1 && compb_getOpcode(C, t->word) == -1) {
-					//printf("unknown label '%s'\n", t->word);
-					//exit(1);
+					if (strcmp(t->word, "SECTION") && strcmp(t->word, "DATA") && strcmp(t->word, "CODE")) {
+						printf("unknown label '%s'\n", t->word);
+						exit(1);
+					}
 				}
 				// if we find a label definition, remove it from the list.
 				// note, we have to peek so that we can properly remove
@@ -417,12 +419,17 @@ u8* compb_compileTokens(compb_state* C, lexb_token* token_head, const s8* filena
 		}
 		t = t->next;
 	}
-
-	u8* final = malloc(sizeof(bytecode) + sizeof(data_start) + sizeof(code_start) + 1);
-	memset(&final[0], 0, sizeof(final));
-	memcpy(&final[0], &data_start, sizeof(data_start));
-	memcpy(&final[4], &code_start, sizeof(code_start));
-	memcpy(&final[8], bytecode, bp - bytecode);
+	
+	unsigned int final_len = sizeof(bytecode) + sizeof(data_start) + sizeof(code_start) + sizeof(unsigned int) + 1;
+	u8* final = malloc(final_len);
+	memset(final, 0, final_len); 
+	final[0] = 0xde;
+	final[1] = 0xad;
+	final[2] = 0xc0;
+	final[3] = 0xde;
+	memcpy(&final[4], &data_start, sizeof(data_start));
+	memcpy(&final[8], &code_start, sizeof(code_start));
+	memcpy(&final[12], bytecode, bp - bytecode);
 
 	free(bytecode);
 

@@ -1,23 +1,18 @@
 extern printf;
-extern fopen;
-extern sprintf;
+
+func other_function() {
+	
+	let some_meme;
+	let some_other_meme;
+	
+	some_meme = "Hello, world!";
+	some_other_meme = "Goodbye, world!";
+
+}
 
 func main(argc, argv) {
 	
-	let x;
-	let y;
-		
-	x = "Hello";
-	y = "Goodbye";
+	let some_variable;
+	let some_array[64];
 	
-	if something == 1 {
-		goto end;
-	}
-
-	if something == 2 {
-		goto end;
-	}
-
-	label end;
-
 }

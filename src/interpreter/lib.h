@@ -22,6 +22,7 @@ static void spyL_str_strncmp(spy_state*, u8);
 static void spyL_str_strcpy(spy_state*, u8);
 static void spyL_str_strcat(spy_state*, u8);
 static void spyL_str_sprintf(spy_state*, u8);
+static void spyL_str_strtor(spy_state*, u8);
 
 static void spyL_mem_malloc(spy_state*, u8);
 static void spyL_mem_free(spy_state*, u8);

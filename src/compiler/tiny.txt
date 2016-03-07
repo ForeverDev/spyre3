@@ -57,6 +57,7 @@ GOTO			10
 LABEL			11
 EXTERN			12
 LET				13
+LEAVE			98
 EXPRESSION		99
 
 __TokenList_new(Token);
@@ -93,8 +94,12 @@ struct Chunk {
 [4, 8) = general
 
 struct LabelStack {
-	int				label_id;
+	int				type;
 	LabelStack*		next;
+	LabelStack*		prev; // double linked list
+	int				general[4];
 }
 [0] = id
 [1] = next
+[2] = prev
+[3, 7) = general

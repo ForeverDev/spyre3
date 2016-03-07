@@ -22,6 +22,7 @@ void spyL_loadlibs(spy_state* S) {
 	spy_pushcfunction(S, "strcpy", spyL_str_strcpy);
 	spy_pushcfunction(S, "strcmp", spyL_str_strcmp);
 	spy_pushcfunction(S, "sprintf", spyL_str_sprintf);
+	spy_pushcfunction(S, "strtor", spyL_str_strtor);
 
 	spy_pushcfunction(S, "malloc", spyL_mem_malloc);
 	spy_pushcfunction(S, "free", spyL_mem_free);
@@ -241,6 +242,12 @@ void spyL_str_sprintf(spy_state* S, u8 nargs) {
 		spy_setmem(S, addr + strlen(S->gen2), 0);
 	}
 	spy_setregister(S, "RAX", 0);
+}
+
+void spyL_str_strtor(spy_state* S, u8 nargs) {
+	spy_getstr(S, "REX", S->gen0);	
+	// TODO decide base
+	spy_setregister(S, "RAX", (f64)strtol(S->gen0, NULL, 10));
 }
 
 // MEMORY MANAGEMENT LIBRARY

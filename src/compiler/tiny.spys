@@ -11,6 +11,7 @@ let fprintf				"fprintf"
 let sprintf				"sprintf"
 let fopen				"fopen"
 let fclose				"fclose"
+let strtor				"strtor"
 
 ; ----- constant strings -----
 let DEBUG_IO_INOUT		"input name: %s\noutput name: %s\n"
@@ -98,16 +99,16 @@ let INS_JMP				"jmp"
 let INS_JIF				"jif"
 let INS_JIT				"jit"
 
-let PUT_MODE0			"%s\t\n"
-let PUT_MODE1			"%s\t%s\n" 
-let PUT_MODE2			"%s\t%s, %d\n"
-let PUT_MODE3			"%s\t%s, %s\n"
-let PUT_MODE4			"%s\t%s, [%s + %d]\n"
-let PUT_MODE5			"%s\t[%s + %d], %d\n"
-let PUT_MODE6			"%s\t[%s + %d]\n"
-let PUT_MODE7			"%s\t%d\n"
-let PUT_MODE7S			"%s\t%s\n"
-let PUT_MODE8			"%s\t[%s + %d], [%s + %d]\n"
+let PUT_MODE0			"\t%s\t\n"
+let PUT_MODE1			"\t%s\t%s\n" 
+let PUT_MODE2			"\t%s\t%s, %d\n"
+let PUT_MODE3			"\t%s\t%s, %s\n"
+let PUT_MODE4			"\t%s\t%s, [%s + %d]\n"
+let PUT_MODE5			"\t%s\t[%s + %d], %d\n"
+let PUT_MODE6			"\t%s\t[%s + %d]\n"
+let PUT_MODE7			"\t%s\t%d\n"
+let PUT_MODE7S			"\t%s\t%s\n"
+let PUT_MODE8			"\t%s\t[%s + %d], [%s + %d]\n"
 let PUT_LABEL			"%s:\n"
 let PUT_SECT			"section %s\n"
 let PUT_LET				"let %s \"%s\"\n"
@@ -116,11 +117,11 @@ let REWRITE_STRHEAD		"STR%d"
 
 let SECT_DATA			"data"
 let SECT_CODE			"code"
-let LBL_START			"start"
+let LBL_MAIN			"main"
 
 ; --------------- START LEXER ---------------
 section code
-jmp			start
+jmp			main	
 
 ; ARGS
 ;	REX: string TOKEN_TYPE
@@ -927,40 +928,16 @@ print01:
 
 ; ARGS
 ;	REX: TokenList in infix
-__TokenList_createInPostfix
-	dlog	99
+__TokenList_createInPostfix:
 	push	rbp
 	mov		rbp, rsp
-	add		rsp, 5
 
-	; [rbp + 1] infix TokenList
-	; [rbp + 2] current infix
-	; [rbp + 3] operator TokenList
-	; [rbp + 4] RPN TokenList
+	; TODO implement shunting yard algorithm here
+	; for now, the compiler expects that Spyre expressions
+	; are already in postfix
 
-	mov		[rbp + 1], rex
-	mov		[rbp + 2], rex
-	
-	; create the operator list
-	mov		rex, 0
-	call	__TokenList_new
-	mov		[rbp + 3], rax
+	mov		rax, rex
 
-	; create the RPN list
-	mov		rex, 0
-	call	__TokenList_new
-	mov		[rbp + 4], rax
-create00:
-	cmp		[rbp + 2], 0
-	jit		create01
-
-	mov		rex, [rbp + 2]
-	mov		rex, [rbp + 0]	
-	call	__Token_print
-
-	mov		rax, [rbp + 2]
-	jmp		create00
-create01:
 	mov		rsp, rbp
 	pop		rbp
 	ret
@@ -1151,30 +1128,29 @@ Chunk_print01:
 ;	RHX: should_convert_to_postfix
 __Chunk_setGeneralField:
 	push	rbp
+	push	rbx
 	mov		rbp, rsp
-	sub		rsp,
+	add		rsp, 4
 
 	mov		[rbp + 1], rex ; chunk
 	mov		[rbp + 2], rfx ; index
 	mov		[rbp + 3], rgx ; token_list
-	mov		[rbp + 4], rhx
+	mov		[rbp + 4], rhx ; should_convert_to_postfix
 
 	; find the location we want to write to
-	mov		rax, [rbp + 1]
-	add		rax, 4
-	add		rax, [rbp + 2]
-	
-	; now write
-	cmp		[rbp + 4], 0
+	mov		rbx, [rbp + 1]
+	add		rbx, 4
+	add		rbx, [rbp + 2]
+	cmp		[rbp + 4], 1
 	jif		setGF00
-	lea		rex, [rbp + 3]
-	push	rax
+	mov		rex, [rbp + 3]
 	call	__TokenList_createInPostfix
-	pop		rax
+	mov		[rbp + 3], rax
 setGF00:
-	mov		[rax + 0], [rbp + 3]
+	mov		[rbx + 0], [rbp + 3]
 
 	mov		rsp, rbp
+	pop		rbx
 	pop		rbp
 	ret	
 
@@ -1313,10 +1289,19 @@ genT00: ; while tokens[i].type != TYPE_UNKNOWN
 	jit		genT04				; skip if newline
 	
 	mov		rax, [rbp + 3]
-	cmp		[rax + 0], 17		; skip and decrement depth if '}'
+	cmp		[rax + 0], 17		;  '}'
 	jif		genT00_99
+	; we know it's a }
+	; decrement the depth
 	sub		[rbp + 5], 1
-	jmp		genT04
+	; also create a chunk that marks a leave of scope
+	mov		rex, 98
+	mov		rfx, [rbp + 5]
+	mov		rgx, [rbp + 10]
+	call	__Chunk_new
+	mov		[rbp + 6], rax
+
+	jmp		genT02
 genT00_99:
 	
 	; --- CHECK FUNC TOKEN ---
@@ -1813,7 +1798,7 @@ genT13:
 	call	__Chunk_new
 	mov		[rbp + 6], rax
 
-	; we're on the token 'EXTERN'
+	; we're on the token 'LET'
 	; increment and assign the identifier
 	add		[rbp + 2], 1
 	mov		rax, [rbp + 1]
@@ -1831,12 +1816,50 @@ genT13:
 	call	__Chunk_setGeneralField
 
 	; still on the identifier, increment
-	; to skip over the semicolon
+	; now we're on either a semicolon or '['
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; if it is a '[', we know it is an array
+	mov		rax, [rbp + 3]
+	cmp		[rax + 0], 18
+	jif		genT13_01
+	; it's '[', increment by one so we land on the number
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+	; now we're on the number
+	mov		rex, [rbp + 3]
+	call	__TokenList_new
+
+	; add the number to general[1]
+	mov		rex, [rbp + 6]
+	mov		rfx, 1
+	mov		rgx, rax
+	mov		rhx, 0
+	call	__Chunk_setGeneralField
+
+	; increment by two to skip over ']' and ';'
 	add		[rbp + 2], 2
 	mov		rax, [rbp + 1]
 	add		rax, [rbp + 2]
 	mov		[rbp + 3], [rax + 0]
 
+	jmp		genT13_01
+genT13_00:
+	
+	; if we're here, there is no array size
+	; just skip the semicolon
+	add		[rbp + 2], 1
+	mov		rax, [rbp + 1]
+	add		rax, [rbp + 2]
+	mov		[rbp + 3], [rax + 0]
+
+genT13_01:
 	jmp		genT02
 
 	; --- END LET PARSING ---
@@ -1868,7 +1891,7 @@ genT14:
 	mov		rex, [rbp + 6]
 	mov		rfx, 0
 	mov		rgx, rax
-	mov		rhx, 0
+	mov		rhx, 1
 	call	__Chunk_setGeneralField
 
 	; increment over the semicolon
@@ -1999,8 +2022,6 @@ findC0_00_00:
 	push	4
 	ccall	fprintf
 
-	pop		rax
-	
 	mov		rbx, [rax + 0]
 	lea		rbx, [rbx + 1]
 	; rbx now contains a pointer to the token word
@@ -2011,6 +2032,8 @@ findC0_00_00:
 	mov		rgx, [rbp + 8]
 	push	3
 	ccall	sprintf
+
+	pop		rax
 
 	; increment the string counter
 	add		[rbp + 8], 1
@@ -2043,41 +2066,113 @@ findC01:
 __LabelStack_new:
 	push	rbp
 	mov		rbp, rsp
-	add		rsp, 2
+	add		rsp, 1
 
-	; allocate a new LabelStack
-	mov		rex, 2
+	mov		rex, 6
 	push	1
 	ccall	malloc
-	mov		[rbp + 2], rax
+	mov		[rbp + 1], rax	
 
+	mov		rax, [rbp + 1]
 	mov		[rax + 0], 0
 	mov		[rax + 1], 0
+	mov		[rax + 2], 0
+	mov		[rax + 3], 0
+	mov		[rax + 4], 0
+	mov		[rax + 5], 0
 
-	mov		rax, [rbp + 2]
+	mov		rsp, rbp
+	pop		rbp	
+	ret
+
+; ARGS
+;	REX: LabelStack to append to
+;	RFX: type
+;	RGX: general0
+;	RHX: general1
+__LabelStack_push:
+	push	rbp
+	push	rbx
+	mov		rbp, rsp
+	add		rsp, 5
+
+	mov		[rbp + 1], rex
+	mov		[rbp + 2], rfx
+	mov		[rbp + 3], rgx
+	mov		[rbp + 4], rhx		
+
+	mov		rex, 6
+	push	1
+	ccall	malloc
+	mov		[rbp + 5], rax
+	mov		[rax + 0], [rbp + 2]
+	mov		[rax + 1], 0
+	mov		[rax + 2], 0
+	mov		[rax + 3], [rbp + 3]
+	mov		[rax + 4], [rbp + 4]
+
+	mov		rex, [rbp + 1]
+	call	__TokenList_getTail
+	; rax contains the tail
+	; tail->next = new
+	mov		[rax + 1], [rbp + 5]
+	; new->prev = tail
+	mov		rbx, [rbp + 5]
+	mov		[rbx + 2], rax
+
+	mov		rsp, rbp
+	pop		rbx
+	pop		rbp
+	ret
+
+; TODO FIX THIS HACK
+; we're currently using __TokenList_getTail to find
+; the tail of the TokenList because the next field of
+; TokenList and LabelStack is at the same offset
+; rewrite this
+; ARGS
+;	REX: LabelStack
+__LabelStack_getTail:
+	push	rbp
+	mov		rbp, rsp
+	
+	call	__TokenList_getTail
 
 	mov		rsp, rbp
 	pop		rbp
 	ret
 
 ; ARGS
-;	REX: LabelStack to append to
-;	RFX: label ID to append
-__LabelStack_append:
+;	REX: LabelStack
+__LabelStack_pop:
 	push	rbp
+	push	rbx
 	mov		rbp, rsp
-	add		rsp, 3
+	add		rsp, 1
 
-	mov		[rbp + 1], rex
-	mov		[rbp + 2], rfx
+	mov		[rbp + 1], rex		
 	
-	; TODO append this
-	mov		rex, 2
-	push	1
-	ccall	malloc
-	mov		[rbp + 3], rax
+	mov		rex, [rbp + 1]
+	call	__TokenList_getTail
+	; return 0 if the tail is the same as the head
+	cmp		rax, 0
+	jif		LSpop00
+	mov		rax, 0 
+	jmp		LSpopleave
+LSpop00:
+	; reached here if there is still something to pop
+	; tail is in rax
+
+	; tail->prev->next = NULL
+	mov		rbx, [rax + 2]
+	mov		[rbx + 1], 0
+
+	; tail->prev = 0
+	mov		[rax + 2], 0
+LSpopleave:
 
 	mov		rsp, rbp
+	pop		rbx
 	pop		rbp
 	ret
 
@@ -2087,7 +2182,7 @@ __LabelStack_append:
 generateBytecode:
 	push	rbp
 	mov		rbp, rsp
-	add		rsp, 6
+	add		rsp, 128
 	
 	; [rbp + 1] out file name
 	; [rbp + 2] syntax tree
@@ -2096,9 +2191,13 @@ generateBytecode:
 	; [rbp + 5] holds the last node in the tree
 	; [rbp + 6] holds the label count
 	; [rbp + 7] holds the LabelStack
+	; [rbp + [50, 128]] general
 	mov		[rbp + 1], rex
 	mov		[rbp + 2], rfx
 	mov		[rbp + 4], rfx
+
+	call	__LabelStack_new
+	mov		[rbp + 7], rax
 
 	; open the file for writing
 	mov		rex, [rbp + 1]
@@ -2131,17 +2230,11 @@ generateBytecode:
 	mov		rgx, SECT_CODE
 	ccall	fprintf
 
-	; write a new line
-	mov		rex, [rbp + 3]
-	mov		rfx, FORMAT_CHAR
-	mov		rgx, 10
-	ccall	fprintf
-
 	; jump to start
 	mov		rex, [rbp + 3]
 	mov		rfx, PUT_MODE7S
 	mov		rgx, INS_JMP
-	mov		rhx, LBL_START
+	mov		rhx, LBL_MAIN
 	push	4
 	ccall	fprintf
 
@@ -2151,9 +2244,205 @@ generateBytecode:
 code00:
 	cmp		[rbp + 4], 0
 	jit		code01	
+	
+	; store the current chunk
+	mov		rax, [rbp + 4]
+	mov		[rbp + 50], [rax + 0]
 
-	; we're looping through each node in the syntax
-	; tree
+	; switch(type);
+	cmp		[rbp + 50], 0
+	jit		code02
+	cmp		[rbp + 50], 3
+	jit		code03
+	cmp		[rbp + 50], 4
+	jit		code04
+	cmp		[rbp + 50], 5
+	jit		code05
+	cmp		[rbp + 50], 6
+	jit		code06
+	cmp		[rbp + 50], 7
+	jit		code07
+	cmp		[rbp + 50], 8
+	jit		code08
+	cmp		[rbp + 50], 9
+	jit		code09
+	cmp		[rbp + 50], 10
+	jit		code10
+	cmp		[rbp + 50], 11
+	jit		code11
+	cmp		[rbp + 50], 12
+	jit		code12
+	cmp		[rbp + 50], 13
+	jit		code13
+	cmp		[rbp + 50], 98
+	jit		code14
+	cmp		[rbp + 50], 99
+	jit		code15
+	jmp		code02
+code03: ; case FUNC
+	; first thing we want to do is compile the 
+	; label for the function
+	; get the identifier in [rbp + 50]		
+	mov		rax, [rbp + 4]
+	mov		rax, [rax + 4]
+	mov		rax, [rax + 0]
+	lea		[rbp + 50], [rax + 1]
+
+	; increase to the next chunk
+	mov		rax, [rbp + 4]
+	mov		[rbp + 4], [rax + 2]
+	
+	; [rbp + 50] is now the function name
+	; write the label
+	mov		rex, [rbp + 3]
+	mov		rfx, PUT_LABEL
+	mov		rgx, [rbp + 50]
+	push	3
+	ccall	fprintf
+
+	; now write the function prefix
+	; push rbp
+	mov		rex, [rbp + 3]
+	mov		rfx, PUT_MODE1
+	mov		rgx, INS_PUSH
+	mov		rhx, REG_RBP
+	push	4
+	ccall	fprintf
+
+	; mov rbp, rsp
+	mov		rex, [rbp + 3]
+	mov		rfx, PUT_MODE3
+	mov		rgx, INS_MOV
+	mov		rhx, REG_RBP
+	mov		rix, REG_RSP
+	push	5
+	ccall	fprintf
+
+	; now we're going to count all of the LETs that we see
+	; note that the depth of every function is 1, so we
+	; can simply continue counting until the depth is == 0
+	; store the stack size we want in [rbp + 51]
+	mov		[rbp + 51], 0
+	; also store the current chunk in [rbp + 52]
+	mov		[rbp + 52], [rbp + 4]
+code03_00:
+	; end loop if depth == 0
+	mov		rax, [rbp + 52]
+	cmp		rax, 0
+	jit		code03_01
+	cmp		[rax + 1], 0
+	jit		code03_01	
+
+	; if we found a let, increase [rbp + 51]
+	mov		rax, [rbp + 52]
+	cmp		[rax + 0], 13	
+	jif		code03_02
+	; we know it's a let
+	; determine if it's a simple variable or an array
+	mov		rax, [rbp + 52]
+	mov		rax, [rax + 5]
+	cmp		[rax + 0], 0
+	jif		code03_03
+	; it's a simple
+	add		[rbp + 51], 1
+	jmp		code03_02
+code03_03: 
+	; it's an array type
+	; convert the length of the array to a real
+	mov		rex, [rbp + 52]
+	mov		rex, [rex + 5]
+	mov		rex, [rex + 0]
+	lea		rex, [rex + 1]
+	push	1
+	ccall	strtor
+	; the length of the array is in rax
+	add		[rbp + 51], rax
+code03_02:
+
+	mov		rax, [rbp + 52]
+	mov		[rbp + 52], [rax + 2]
+	jmp		code03_00
+code03_01:
+	
+	; increase the stack pointer by [rbp + 51]
+	mov		rex, [rbp + 3]
+	mov		rfx, PUT_MODE2	
+	mov		rgx, INS_ADD
+	mov		rhx, REG_RSP
+	mov		rix, [rbp + 51]
+	push	5
+	ccall	fprintf
+
+	; we're at the end of function compilation
+	; add to the label stack
+	mov		rex, [rbp + 7]
+	mov		rfx, 3 
+	mov		rgx, 0
+	mov		rhx, 0
+	call	__LabelStack_push
+
+	jmp		code02
+code04: ; case IF
+	jmp		code02
+code05: ; case WHILE
+	jmp		code02
+code06: ; case FOR
+	jmp		code02
+code07: ; case RETURN
+	jmp		code02
+code08: ; case CONTINUE
+	jmp		code02
+code09: ; case BREAK
+	jmp		code02
+code10: ; case GOTO
+	jmp		code02
+code11: ; case LABEL
+	jmp		code02
+code12: ; case EXTERN
+	jmp		code02
+code13: ; case LET
+	jmp		code02
+code14:	; case LEAVE
+
+	mov		rex, [rbp + 7]
+	call	__LabelStack_pop
+	mov		rax, [rax + 0]
+	; rax now contains the type of the pop
+	cmp		rax, 3
+	jit		code14_00
+	jmp		code14_end
+code14_00: ; case FUNC
+	; mov rsp, rbp
+	mov		rex, [rbp + 3]
+	mov		rfx, PUT_MODE3
+	mov		rgx, INS_MOV
+	mov		rhx, REG_RSP
+	mov		rix, REG_RBP
+	push	5
+	ccall	fprintf
+
+	; pop rbp
+	mov		rex, [rbp + 3]
+	mov		rfx, PUT_MODE1
+	mov		rgx, INS_POP
+	mov		rhx, REG_RBP
+	push	4
+	ccall	fprintf
+
+	; ret
+	mov		rex, [rbp + 3]
+	mov		rfx, PUT_MODE0
+	mov		rgx, INS_RET
+	push	3
+	ccall	fprintf
+
+	jmp		code14_end
+code14_end:
+
+	jmp		code02
+code15: ; case EXPRESSION
+	jmp		code02
+code02:	; END OF SWITCH
 
 	mov		rax, [rbp + 4]
 	mov		[rbp + 4], [rax + 2] 
@@ -2170,7 +2459,7 @@ code01:
 ;	RFX: FILE CONTENTS LENGTH
 ;	RGX: FILE NAME
 ;	RHX: FILE OUTPUT NAME
-start:
+main:
 	push	rbp
 	mov		rbp, rsp
 	add		rsp, 6

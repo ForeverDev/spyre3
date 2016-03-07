@@ -1,6 +1,6 @@
 CC = gcc
 CF = -std=c11
-LIBS = -llua -ldl -lm
+LIBS = 
 DEPS = build/main.o build/assembler-lex.o build/assembler.o build/lib.o build/api.o build/spyre.o 
 BUILD = build
 

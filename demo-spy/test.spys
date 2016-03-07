@@ -1,12 +1,20 @@
 section data
 let printf "printf"
-let fopen "fopen"
-let sprintf "sprintf"
-let STR0 "Hello"
-let STR1 "Goodbye"
-
-
+let STR0 "Hello, world!"
+let STR1 "Goodbye, world!"
 section code
-
-
-jmp	start
+	jmp	main
+other_function:
+	push	rbp
+	mov	rbp, rsp
+	add	rsp, 2
+	mov	rsp, rbp
+	pop	rbp
+	ret	
+main:
+	push	rbp
+	mov	rbp, rsp
+	add	rsp, 65
+	mov	rsp, rbp
+	pop	rbp
+	ret	

@@ -2,9 +2,6 @@
 #include <stdlib.h>
 #include <string.h>
 #include <unistd.h>
-#include <lua.h>
-#include <lualib.h>
-#include <lauxlib.h>
 #include "interpreter/assembler.h"
 #include "interpreter/assembler-lex.h"
 #include "interpreter/spyre.h"
@@ -69,9 +66,11 @@ int main(int argc, char** argv) {
 		fsrc = malloc(flen + 1);
 		fsrc[flen] = 0;
 		fread(fsrc, flen, 1, src);
-
+	
+		// TODO once the compiler is done, obviously we don't want to reassemble it every time
+		// the compiler should already be in bytecode format
 		const unsigned char* compilesrc = lexb_readAndTokenize(L, "/usr/local/include/spyre/tiny.spys");
-		const unsigned char* code = spy_prepare(S, compilesrc);
+		const unsigned char* code = spy_prepare(S, &compilesrc[4]);
 		u64 fcontents = spy_pushstring(S, fsrc);
 		u64 fname = spy_pushstring(S, input_name);
 		f64 foutput = spy_pushstring(S, output_name);
